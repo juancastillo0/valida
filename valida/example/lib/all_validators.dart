@@ -1,5 +1,5 @@
-import 'package:formgen/formgen.dart';
-import 'package:formgen_example/model.dart';
+import 'package:valida/valida.dart';
+import 'package:valida_example/model.dart';
 
 class Validators {
   static const typeMap = <Type, Validator>{

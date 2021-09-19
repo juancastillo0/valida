@@ -1,7 +1,7 @@
-import 'package:formgen/validate/serde_type.dart';
-import 'package:formgen/validate/validate.dart';
-import 'package:formgen/validate/validate_collections.dart';
-import 'package:formgen/validate/validate_string.dart';
+import 'package:valida/validate/serde_type.dart';
+import 'package:valida/validate/validate.dart';
+import 'package:valida/validate/validate_collections.dart';
+import 'package:valida/validate/validate_string.dart';
 import 'models/comp_val.dart';
 
 export 'models/comp_val.dart';

@@ -1,4 +1,4 @@
-name: formgen_example
+name: valida_example
 description: A new Flutter package project.
 version: 0.0.1
 homepage:
@@ -7,11 +7,11 @@ environment:
   sdk: ">=2.12.0-0 <3.0.0"
 
 dependencies:
-  formgen:
+  valida:
     path: ../
 
 dev_dependencies:
   test:
   build_runner:
-  formgen_generation:
-    path: ../../formgen_generation/
+  valida_generator:
+    path: ../../valida_generator/

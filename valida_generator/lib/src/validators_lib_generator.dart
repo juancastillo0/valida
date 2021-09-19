@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:build/build.dart';
 import 'package:dart_style/dart_style.dart';
-import 'package:formgen/formgen.dart';
+import 'package:valida/valida.dart';
 import 'package:glob/glob.dart';
 import 'package:path/path.dart' as p;
 import 'package:source_gen/source_gen.dart';
@@ -48,7 +48,7 @@ class ValidatorsLibGenerator implements Builder {
       //     AssetId(buildStep.inputId.package, 'lib/global.validations.dart');
 
       String out = '''
-import 'package:formgen/formgen.dart';
+import 'package:valida/valida.dart';
 ${allClasses.map((e) => "import '${e.source.uri}';").toSet().join()}
 
 // ignore: avoid_classes_with_only_static_members

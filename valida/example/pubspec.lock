@@ -169,20 +169,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.0"
-  formgen:
-    dependency: "direct main"
-    description:
-      path: ".."
-      relative: true
-    source: path
-    version: "0.0.1"
-  formgen_generation:
-    dependency: "direct dev"
-    description:
-      path: "../../formgen_generation"
-      relative: true
-    source: path
-    version: "0.0.1"
   frontend_server_client:
     dependency: transitive
     description:
@@ -442,6 +428,20 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.3.0"
+  valida:
+    dependency: "direct main"
+    description:
+      path: ".."
+      relative: true
+    source: path
+    version: "0.0.1"
+  valida_generator:
+    dependency: "direct dev"
+    description:
+      path: "../../valida_generator"
+      relative: true
+    source: path
+    version: "0.0.1"
   validators:
     dependency: transitive
     description:

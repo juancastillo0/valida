@@ -1,4 +1,4 @@
-import 'package:formgen_example/model.dart';
+import 'package:valida_example/model.dart';
 import 'package:test/test.dart';
 
 void main() {

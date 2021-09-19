@@ -1,4 +1,4 @@
-import 'package:formgen/formgen.dart';
+import 'package:valida/valida.dart';
 
 part 'model.g.dart';
 

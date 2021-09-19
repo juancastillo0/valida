@@ -1,6 +1,6 @@
-import 'package:formgen/validate/serde_type.dart';
-import 'package:formgen/validate/validate.dart';
-import 'package:formgen/validate/validate_annotations.dart';
+import 'package:valida/validate/serde_type.dart';
+import 'package:valida/validate/validate.dart';
+import 'package:valida/validate/validate_annotations.dart';
 
 abstract class ValidateLength {
   int? get minLength;

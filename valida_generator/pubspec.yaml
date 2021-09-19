@@ -10,7 +10,7 @@ dependencies:
   build:
   source_gen:
   analyzer:
-  formgen:
+  valida:
     path: ../valida/
 
 dev_dependencies:
