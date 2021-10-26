@@ -32,15 +32,17 @@ class ValidatorsLibGenerator implements Builder {
     final allClasses = <ClassElement>[];
 
     await for (final input in buildStep.findAssets(Glob('lib/**.dart'))) {
-      final library = await buildStep.resolver.libraryFor(input);
-      final classesInLibrary = LibraryReader(library).classes;
+      try {
+        final library = await buildStep.resolver.libraryFor(input);
+        final classesInLibrary = LibraryReader(library).classes;
 
-      allClasses.addAll(
-        classesInLibrary.where(
-          (element) => const TypeChecker.fromRuntime(Validate)
-              .hasAnnotationOfExact(element),
-        ),
-      );
+        allClasses.addAll(
+          classesInLibrary.where(
+            (element) => const TypeChecker.fromRuntime(Validate)
+                .hasAnnotationOfExact(element),
+          ),
+        );
+      } catch (_) {}
     }
 
     try {
