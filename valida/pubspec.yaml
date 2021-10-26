@@ -8,11 +8,10 @@ environment:
 
 dependencies:
   validators: ^3.0.0
-  meta: 
+  meta:
 
 dev_dependencies:
   test:
   lint: ^1.0.0
-
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
