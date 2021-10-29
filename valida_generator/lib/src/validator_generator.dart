@@ -8,6 +8,7 @@ import 'package:analyzer/dart/element/visitor.dart';
 // ignore: implementation_imports
 import 'package:analyzer/src/dart/element/element.dart';
 import 'package:build/build.dart';
+import 'package:valida/serde_type.dart';
 import 'package:valida/valida.dart';
 import 'package:source_gen/source_gen.dart';
 

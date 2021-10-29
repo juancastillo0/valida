@@ -1,4 +1,4 @@
-import 'package:valida/validate/serde_type.dart';
+import 'package:valida/serde_type.dart';
 import 'package:valida/validate/validate.dart';
 import 'package:valida/validate/validate_annotations.dart';
 

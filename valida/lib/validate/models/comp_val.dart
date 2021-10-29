@@ -1,7 +1,6 @@
 import 'dart:convert';
 
-import 'package:valida/valida.dart';
-import 'package:valida/validate/serde_type.dart';
+import 'package:valida/serde_type.dart';
 import 'package:meta/meta.dart';
 
 @immutable
