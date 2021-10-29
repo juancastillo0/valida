@@ -16,24 +16,7 @@ enum UUIDVersion {
 
 enum ISBNVersion { v10, v13 }
 
-T? _parseEnum<T>(String? raw, List<T> enumValues) {
-  if (raw == null) {
-    return null;
-  }
-  for (final value in enumValues) {
-    final str = value.toString();
-    if (raw == str || raw == str.split('.')[1]) {
-      return value;
-    }
-  }
-  throw Error();
-}
-
-String? _toEnumString(Object? value) {
-  return value == null ? null : value.toString().split('.')[1];
-}
-
-class ValidateString extends ValidateField<String> implements ValidateLength {
+class ValidaString extends ValidaField<String> implements ValidaLength {
   final List<String>? isIn; // enum
 
   @override
@@ -77,14 +60,14 @@ class ValidateString extends ValidateField<String> implements ValidateLength {
   final bool? isUppercase;
 
   @override
-  ValidateFieldType get variantType => ValidateFieldType.string;
+  ValidaFieldType get variantType => ValidaFieldType.string;
 
   @override
-  final List<ValidationError> Function(String)? customValidate;
+  final List<ValidaError> Function(String)? customValidate;
   @override
   final String? customValidateName;
 
-  const ValidateString({
+  const ValidaString({
     this.isIn,
     this.maxLength,
     this.minLength,
@@ -126,7 +109,7 @@ class ValidateString extends ValidateField<String> implements ValidateLength {
   @override
   Map<String, Object?> toJson() {
     return {
-      ValidateField.variantTypeString: variantType.toString(),
+      ValidaField.variantTypeString: variantType.toString(),
       'isIn': isIn,
       'maxLength': maxLength,
       'minLength': minLength,
@@ -163,8 +146,8 @@ class ValidateString extends ValidateField<String> implements ValidateLength {
     }..removeWhere((key, value) => value == null);
   }
 
-  factory ValidateString.fromJson(Map<String, Object?> map) {
-    return ValidateString(
+  factory ValidaString.fromJson(Map<String, Object?> map) {
+    return ValidaString(
       isIn:
           map['isIn'] == null ? null : List<String>.from(map['isIn']! as List),
       maxLength: map['maxLength'] as int?,
@@ -243,4 +226,21 @@ class ValidateString extends ValidateField<String> implements ValidateLength {
     'isISBN': SerdeType.enumV(ISBNVersion.values),
     'isIP': SerdeType.enumV(IPVersion.values),
   };
+}
+
+T? _parseEnum<T>(String? raw, List<T> enumValues) {
+  if (raw == null) {
+    return null;
+  }
+  for (final value in enumValues) {
+    final str = value.toString();
+    if (raw == str || raw == str.split('.')[1]) {
+      return value;
+    }
+  }
+  throw Error();
+}
+
+String? _toEnumString(Object? value) {
+  return value == null ? null : value.toString().split('.')[1];
 }

@@ -1,23 +1,15 @@
 targets:
   $default:
     builders:
-      valida_generator|form_gen:
+      valida_generator|validator_gen:
         enabled: true
 
 builders:
-  form_gen:
-    target: ":valida_generator"
-    import: "package:valida_generator/valida_generator.dart"
-    builder_factories: ["formGen"]
-    build_extensions: {".dart": [".form_gen.g.part"]}
-    auto_apply: dependents
-    build_to: cache
-    applies_builders: ["source_gen|combining_builder"]
   validator_gen:
     target: ":valida_generator"
     import: "package:valida_generator/valida_generator.dart"
     builder_factories: ["validatorGen"]
-    build_extensions: {".dart": [".validator_gen.g.part"]}
+    build_extensions: { ".dart": [".validator_gen.g.part"] }
     auto_apply: dependents
     build_to: cache
     applies_builders: ["source_gen|combining_builder"]
@@ -28,7 +20,7 @@ builders:
     # Name of the function in the above library to call.
     builder_factories: ["validatorsLibGen"]
     # The mapping from the source extension to the generated file extension
-    build_extensions: {".dart": [".validators.dart"]}
+    build_extensions: { ".dart": [".validators.dart"] }
     # Will automatically run on any package that depends on it
     auto_apply: dependents
     # Generate the output directly into the package, not to a hidden cache dir

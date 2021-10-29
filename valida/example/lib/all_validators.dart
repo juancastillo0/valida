@@ -1,6 +1,7 @@
 import 'package:valida/valida.dart';
 import 'package:valida_example/model.dart';
 
+// ignore: avoid_classes_with_only_static_members
 class Validators {
   static const typeMap = <Type, Validator>{
     FormTest: validatorFormTest,

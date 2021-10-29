@@ -38,7 +38,7 @@ class ValidatorsLibGenerator implements Builder {
 
         allClasses.addAll(
           classesInLibrary.where(
-            (element) => const TypeChecker.fromRuntime(Validate)
+            (element) => const TypeChecker.fromRuntime(Valida)
                 .hasAnnotationOfExact(element),
           ),
         );

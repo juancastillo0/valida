@@ -7,17 +7,17 @@ part 'model.g.dart';
 // custom validator ergonomics, for field and for class
 // nested validation execution and result
 
-List<ValidationError> _customValidateStr(String value) {
+List<ValidaError> _customValidateStr(String value) {
   return [];
 }
 
-@Validate(nullableErrorLists: true, customValidate: FormTest._customValidate)
+@Valida(nullableErrorLists: true, customValidate: FormTest._customValidate)
 class FormTest {
-  static List<ValidationError> _customValidate(Object? value) {
+  static List<ValidaError> _customValidate(Object? value) {
     return [];
   }
 
-  @ValidateString(
+  @ValidaString(
     minLength: 15,
     maxLength: 50,
     matches: r'^[a-zA-Z]+$',
@@ -25,21 +25,21 @@ class FormTest {
   )
   final String longStr;
 
-  @ValidateString(maxLength: 20, contains: '@')
+  @ValidaString(maxLength: 20, contains: '@')
   final String shortStr;
 
-  @ValidateNum(isInt: true, min: 0, customValidate: _customValidateNum)
+  @ValidaNum(isInt: true, min: 0, customValidate: _customValidateNum)
   final num positiveInt;
 
-  static List<ValidationError> _customValidateNum(num value) {
+  static List<ValidaError> _customValidateNum(num value) {
     return [];
   }
 
-  @ValidationFunction()
-  static List<ValidationError> _customValidate2(FormTest value) {
+  @ValidaFunction()
+  static List<ValidaError> _customValidate2(FormTest value) {
     return [
       if (value.optionalDecimal == null && value.identifier == null)
-        ValidationError(
+        ValidaError(
           errorCode: 'CustomError.not',
           message: 'CustomError message',
           property: 'identifier',
@@ -48,25 +48,25 @@ class FormTest {
     ];
   }
 
-  @ValidationFunction()
-  List<ValidationError> _customValidate3() {
+  @ValidaFunction()
+  List<ValidaError> _customValidate3() {
     return _customValidate2(this);
   }
 
-  @ValidateNum(
+  @ValidaNum(
     min: 0,
     max: 1,
-    comp: ValidateComparison<num>(
+    comp: ValidaComparison<num>(
       less: CompVal(0),
       moreEq: CompVal.list([CompVal.ref('positiveInt')]),
     ),
   )
   final double? optionalDecimal;
 
-  @ValidateList(minLength: 1, each: ValidateString(isDate: true, maxLength: 3))
+  @ValidaList(minLength: 1, each: ValidaString(isDate: true, maxLength: 3))
   final List<String> nonEmptyList;
 
-  @ValidateString(isUUID: UUIDVersion.v4)
+  @ValidaString(isUUID: UUIDVersion.v4)
   final String? identifier;
 
   final NestedField? nested;
@@ -82,15 +82,15 @@ class FormTest {
   });
 }
 
-@Validate()
+@Valida()
 class NestedField {
-  @ValidateString(isTime: true)
+  @ValidaString(isTime: true)
   final String timeStr;
 
-  @ValidateDate(min: '2021-01-01')
+  @ValidaDate(min: '2021-01-01')
   final DateTime dateWith2021Min;
 
-  @ValidateDate(max: 'now')
+  @ValidaDate(max: 'now')
   final DateTime? optionalDateWithNowMax;
 
   NestedField({

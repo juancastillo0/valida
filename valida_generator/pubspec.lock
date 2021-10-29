@@ -438,11 +438,9 @@ packages:
   valida:
     dependency: "direct main"
     description:
-      path: valida
-      ref: HEAD
-      resolved-ref: "43131eac46412b3e5f90f75c1be48efb1299443c"
-      url: "https://github.com/juancastillo0/valida"
-    source: git
+      path: "../valida"
+      relative: true
+    source: path
     version: "0.0.1"
   validators:
     dependency: transitive

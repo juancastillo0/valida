@@ -129,18 +129,6 @@ class SerdeType {
     );
   }
 
-  // @override
-  // bool operator ==(Object? other) {
-  //   if (identical(this, other)) return true;
-
-  //   return other is SerdeType && other._inner == _inner;
-  // }
-
-  // @override
-  // int get hashCode {
-  //   return _inner.hashCode;
-  // }
-
   @override
   String toString() {
     return 'SerdeType(inner: $_inner)';

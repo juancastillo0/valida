@@ -5,12 +5,13 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/dart/element/visitor.dart';
+// ignore: implementation_imports
 import 'package:analyzer/src/dart/element/element.dart';
-import 'package:build/src/builder/build_step.dart';
+import 'package:build/build.dart';
 import 'package:valida/valida.dart';
 import 'package:source_gen/source_gen.dart';
 
-class ValidatorGenerator extends GeneratorForAnnotation<Validate> {
+class ValidatorGenerator extends GeneratorForAnnotation<Valida> {
   @override
   FutureOr<String> generateForAnnotatedElement(
     Element element,
@@ -34,8 +35,8 @@ class ValidatorGenerator extends GeneratorForAnnotation<Validate> {
       }
 
       final annotationValue = annotation.objectValue.extractValue(
-        Validate.fieldsSerde,
-        (p0) => Validate.fromJson(p0),
+        Valida.fieldsSerde,
+        (p0) => Valida.fromJson(p0),
       );
       final nullableErrorLists = annotationValue.nullableErrorLists;
       final className = visitor.className;
@@ -56,17 +57,17 @@ enum ${className}Field {
 
 class ${className}ValidationFields {
   const ${className}ValidationFields(this.errorsMap);
-  final Map<${className}Field, List<ValidationError>> errorsMap;
+  final Map<${className}Field, List<ValidaError>> errorsMap;
 
   ${visitor.fieldsWithValidate.map((e) {
         final retType =
             '${e.type.getDisplayString(withNullability: false)}Validation?';
         return '$retType get ${e.name} {'
-            'final l = errorsMap[${_fieldIdent(e.name)}];'
-            'return (l != null && l.isNotEmpty) ? l.first.nestedValidation as $retType : null;}';
+            ' final l = errorsMap[${_fieldIdent(e.name)}];'
+            ' return (l != null && l.isNotEmpty) ? l.first.nestedValidation as $retType : null;}';
       }).join()}
   ${visitor.fields.entries.map((e) {
-        return 'List<ValidationError>${nullableErrorLists ? '?' : ''} get ${e.key} '
+        return 'List<ValidaError>${nullableErrorLists ? '?' : ''} get ${e.key} '
             '=> errorsMap[${_fieldIdent(e.key)}]${nullableErrorLists ? '' : '!'};';
       }).join()}
 }
@@ -74,7 +75,7 @@ class ${className}ValidationFields {
 class ${className}Validation extends Validation<${className}, ${className}Field> {
   ${className}Validation(this.errorsMap, this.value, this.fields) : super(errorsMap);
 
-  final Map<${className}Field, List<ValidationError>> errorsMap;
+  final Map<${className}Field, List<ValidaError>> errorsMap;
 
   final ${className} value;
 
@@ -83,7 +84,7 @@ class ${className}Validation extends Validation<${className}, ${className}Field>
 }
 
 ${className}Validation validate${className}(${className} value) {
-  final errors = <${className}Field, List<ValidationError>>{};
+  final errors = <${className}Field, List<ValidaError>>{};
 
   ${visitor.fieldsWithValidate.map((e) {
         final isNullable =
@@ -160,7 +161,7 @@ class ValidationItem {
 
   String errorTemplate(String fieldName, String getter) {
     // ignore: leading_newlines_in_multiline_strings
-    return '''ValidationError(
+    return '''ValidaError(
         message: r'$defaultMessage',
         errorCode: '$errorCode',
         property: '$fieldName',
@@ -176,12 +177,11 @@ class ModelVisitor extends SimpleElementVisitor<void> {
   final validateFunctions = <MethodElement>{};
   final fieldsWithValidate = <FieldElement>{};
 
-  static const _listAnnotation = TypeChecker.fromRuntime(ValidateList);
-  static const _stringAnnotation = TypeChecker.fromRuntime(ValidateString);
-  static const _numAnnotation = TypeChecker.fromRuntime(ValidateNum);
-  static const _dateAnnotation = TypeChecker.fromRuntime(ValidateDate);
-  static const _functionAnnotation =
-      TypeChecker.fromRuntime(ValidationFunction);
+  static const _listAnnotation = TypeChecker.fromRuntime(ValidaList);
+  static const _stringAnnotation = TypeChecker.fromRuntime(ValidaString);
+  static const _numAnnotation = TypeChecker.fromRuntime(ValidaNum);
+  static const _dateAnnotation = TypeChecker.fromRuntime(ValidaDate);
+  static const _functionAnnotation = TypeChecker.fromRuntime(ValidaFunction);
 
   @override
   void visitMethodElement(MethodElement element) {
@@ -202,7 +202,7 @@ class ModelVisitor extends SimpleElementVisitor<void> {
     void _addFields({
       required TypeChecker annotation,
       required Map<String, SerdeType> fieldsSerde,
-      required ValidateField Function(Map<String, Object?> map) fromJson,
+      required ValidaField Function(Map<String, Object?> map) fromJson,
     }) {
       if (annotation.hasAnnotationOfExact(element)) {
         final annot = annotation.annotationsOfExact(element).first;
@@ -217,7 +217,7 @@ class ModelVisitor extends SimpleElementVisitor<void> {
 
     final elementType = element.type.element;
     if (elementType != null) {
-      final fieldType = const TypeChecker.fromRuntime(Validate)
+      final fieldType = const TypeChecker.fromRuntime(Valida)
           .annotationsOfExact(elementType, throwOnUnresolved: false)
           .toList();
       if (fieldType.isNotEmpty) {
@@ -228,40 +228,40 @@ class ModelVisitor extends SimpleElementVisitor<void> {
     // Primitives
     _addFields(
       annotation: _stringAnnotation,
-      fieldsSerde: ValidateString.fieldsSerde,
-      fromJson: (map) => ValidateString.fromJson(map),
+      fieldsSerde: ValidaString.fieldsSerde,
+      fromJson: (map) => ValidaString.fromJson(map),
     );
     _addFields(
       annotation: _numAnnotation,
-      fieldsSerde: ValidateNum.fieldsSerde,
-      fromJson: (map) => ValidateNum.fromJson(map),
+      fieldsSerde: ValidaNum.fieldsSerde,
+      fromJson: (map) => ValidaNum.fromJson(map),
     );
     // Date and Duration
     _addFields(
       annotation: _dateAnnotation,
-      fieldsSerde: ValidateDate.fieldsSerde,
-      fromJson: (map) => ValidateDate.fromJson(map),
+      fieldsSerde: ValidaDate.fieldsSerde,
+      fromJson: (map) => ValidaDate.fromJson(map),
     );
     _addFields(
-      annotation: const TypeChecker.fromRuntime(ValidateDuration),
-      fieldsSerde: ValidateDuration.fieldsSerde,
-      fromJson: (map) => ValidateDuration.fromJson(map),
+      annotation: const TypeChecker.fromRuntime(ValidaDuration),
+      fieldsSerde: ValidaDuration.fieldsSerde,
+      fromJson: (map) => ValidaDuration.fromJson(map),
     );
     // Collections
     _addFields(
       annotation: _listAnnotation,
-      fieldsSerde: ValidateList.fieldsSerde,
-      fromJson: (map) => ValidateList<Object?>.fromJson(map),
+      fieldsSerde: ValidaList.fieldsSerde,
+      fromJson: (map) => ValidaList<Object?>.fromJson(map),
     );
     _addFields(
-      annotation: const TypeChecker.fromRuntime(ValidateSet),
-      fieldsSerde: ValidateSet.fieldsSerde,
-      fromJson: (map) => ValidateSet<Object?>.fromJson(map),
+      annotation: const TypeChecker.fromRuntime(ValidaSet),
+      fieldsSerde: ValidaSet.fieldsSerde,
+      fromJson: (map) => ValidaSet<Object?>.fromJson(map),
     );
     _addFields(
-      annotation: const TypeChecker.fromRuntime(ValidateMap),
-      fieldsSerde: ValidateMap.fieldsSerde,
-      fromJson: (map) => ValidateMap<Object?, Object?>.fromJson(map),
+      annotation: const TypeChecker.fromRuntime(ValidaMap),
+      fieldsSerde: ValidaMap.fieldsSerde,
+      fromJson: (map) => ValidaMap<Object?, Object?>.fromJson(map),
     );
 
     return super.visitFieldElement(element);
@@ -326,7 +326,7 @@ extension ConsumeSerdeType on DartObject {
         final String? discriminator;
         if (t?.element.runtimeType == EnumElementImpl) {
           final index = eValue?.getField('index')?.toIntValue();
-          final v = (t?.element as EnumElementImpl).fields[index! + 2];
+          final v = (t!.element! as EnumElementImpl).fields[index! + 2];
           discriminator = v.name;
         } else {
           discriminator = eValue?.toStringValue() ??
@@ -369,10 +369,10 @@ extension ConsumeSerdeType on DartObject {
 class _Field {
   const _Field(this.element, this.annotation);
   final FieldElement element;
-  final ValidateField annotation;
+  final ValidaField annotation;
 }
 
-extension TemplateValidateField on ValidateField {
+extension TemplateValidateField on ValidaField {
   List<ValidationItem> validations({
     required String fieldName,
     required String prefix,
@@ -389,7 +389,7 @@ extension TemplateValidateField on ValidateField {
           validations.add(ValidationItem(
             condition: '$getter.round() != $getter',
             defaultMessage: 'Should be an integer',
-            errorCode: 'ValidateNum.isInt',
+            errorCode: 'ValidaNum.isInt',
             param: null,
           ));
         }
@@ -404,7 +404,7 @@ extension TemplateValidateField on ValidateField {
           validations.add(ValidationItem(
             condition: '$getter < ${v.min}',
             defaultMessage: 'Should be at a minimum ${v.min}',
-            errorCode: 'ValidateNum.min',
+            errorCode: 'ValidaNum.min',
             param: v.min,
           ));
         }
@@ -412,7 +412,7 @@ extension TemplateValidateField on ValidateField {
           validations.add(ValidationItem(
             condition: '$getter > ${v.max}',
             defaultMessage: 'Should be at a maximum ${v.max}',
-            errorCode: 'ValidateNum.max',
+            errorCode: 'ValidaNum.max',
             param: v.max,
           ));
         }
@@ -424,7 +424,8 @@ extension TemplateValidateField on ValidateField {
             return 'DateTime.now()';
           } else {
             final _p = DateTime.parse(repr);
-            return 'DateTime.fromMillisecondsSinceEpoch(${_p.millisecondsSinceEpoch})';
+            return 'DateTime.fromMillisecondsSinceEpoch'
+                '(${_p.millisecondsSinceEpoch})';
           }
         }
 
@@ -442,7 +443,7 @@ extension TemplateValidateField on ValidateField {
           validations.add(ValidationItem(
             condition: '$minDate.isAfter($getter)',
             defaultMessage: 'Should be at a minimum ${v.min}',
-            errorCode: 'ValidateDate.min',
+            errorCode: 'ValidaDate.min',
             param: '"${v.min}"',
           ));
         }
@@ -451,7 +452,7 @@ extension TemplateValidateField on ValidateField {
           validations.add(ValidationItem(
             condition: '$maxDate.isAfter($getter)',
             defaultMessage: 'Should be at a maximum ${v.max}',
-            errorCode: 'ValidateDate.max',
+            errorCode: 'ValidaDate.max',
             param: '"${v.max}"',
           ));
         }
@@ -537,7 +538,7 @@ extension TemplateValidateField on ValidateField {
 String _defaultMakeString(Object? obj) => obj.toString();
 
 List<ValidationItem> compValidations<T extends Comparable<T>>(
-  ValidateComparison<T> comp, {
+  ValidaComparison<T> comp, {
   required String fieldName,
   required String prefix,
   String Function(T) makeString = _defaultMakeString,
@@ -557,59 +558,59 @@ List<ValidationItem> compValidations<T extends Comparable<T>>(
       ValidationItem(
         condition: comparison(comp.less!, '>= 0'),
         defaultMessage: 'Should be at a minimum ${comp.less}',
-        errorCode: 'ValidateComparable.less',
+        errorCode: 'ValidaComparable.less',
         param: '"${comp.less}"',
       ),
     if (comp.lessEq != null)
       ValidationItem(
         condition: comparison(comp.lessEq!, '> 0'),
         defaultMessage: 'Should be at a less than or equal to ${comp.lessEq}',
-        errorCode: 'ValidateComparable.lessEq',
+        errorCode: 'ValidaComparable.lessEq',
         param: '"${comp.lessEq}"',
       ),
     if (comp.more != null)
       ValidationItem(
         condition: comparison(comp.more!, '<= 0'),
         defaultMessage: 'Should be at a minimum ${comp.more}',
-        errorCode: 'ValidateComparable.more',
+        errorCode: 'ValidaComparable.more',
         param: '"${comp.more}"',
       ),
     if (comp.moreEq != null)
       ValidationItem(
         condition: comparison(comp.moreEq!, '< 0'),
         defaultMessage: 'Should be at a more than or equal to ${comp.moreEq}',
-        errorCode: 'ValidateComparable.moreEq',
+        errorCode: 'ValidaComparable.moreEq',
         param: '"${comp.moreEq}"',
       ),
   ];
 }
 
-List<ValidationItem> lengthValidations(ValidateLength v, String getter) {
+List<ValidationItem> lengthValidations(ValidaLength v, String getter) {
   return [
     if (v.minLength != null)
       ValidationItem(
         condition: '$getter.length < ${v.minLength}',
         defaultMessage: 'Should be at a minimum ${v.minLength} in length',
-        errorCode: 'ValidateList.minLength',
+        errorCode: 'ValidaList.minLength',
         param: v.minLength,
       ),
     if (v.maxLength != null)
       ValidationItem(
         condition: '$getter.length > ${v.maxLength}',
         defaultMessage: 'Should be at a maximum ${v.maxLength} in length',
-        errorCode: 'ValidateList.maxLength',
+        errorCode: 'ValidaList.maxLength',
         param: v.maxLength,
       ),
   ];
 }
 
-List<ValidationItem> stringValidations(ValidateString v, String getter) {
+List<ValidationItem> stringValidations(ValidaString v, String getter) {
   final validations = <ValidationItem>[];
   if (v.minLength != null) {
     validations.add(ValidationItem(
       condition: '$getter.length < ${v.minLength}',
       defaultMessage: 'Should be at a minimum ${v.minLength} in length',
-      errorCode: 'ValidateString.minLength',
+      errorCode: 'ValidaString.minLength',
       param: v.minLength,
     ));
   }
@@ -617,7 +618,7 @@ List<ValidationItem> stringValidations(ValidateString v, String getter) {
     validations.add(ValidationItem(
       condition: '$getter.length > ${v.maxLength}',
       defaultMessage: 'Should be at a maximum ${v.maxLength} in length',
-      errorCode: 'ValidateString.maxLength',
+      errorCode: 'ValidaString.maxLength',
       param: v.maxLength,
     ));
   }
@@ -625,7 +626,7 @@ List<ValidationItem> stringValidations(ValidateString v, String getter) {
     validations.add(ValidationItem(
       condition: '$getter.toUpperCase() != $getter',
       defaultMessage: 'Should be uppercase',
-      errorCode: 'ValidateString.isUppercase',
+      errorCode: 'ValidaString.isUppercase',
       param: null,
     ));
   }
@@ -633,7 +634,7 @@ List<ValidationItem> stringValidations(ValidateString v, String getter) {
     validations.add(ValidationItem(
       condition: '$getter.toLowerCase() != $getter',
       defaultMessage: 'Should be lowercase',
-      errorCode: 'ValidateString.isLowercase',
+      errorCode: 'ValidaString.isLowercase',
       param: null,
     ));
   }
@@ -641,7 +642,7 @@ List<ValidationItem> stringValidations(ValidateString v, String getter) {
     validations.add(ValidationItem(
       condition: 'double.tryParse($getter) == null',
       defaultMessage: 'Should be a number',
-      errorCode: 'ValidateString.isNum',
+      errorCode: 'ValidaString.isNum',
       param: null,
     ));
   }
@@ -649,7 +650,7 @@ List<ValidationItem> stringValidations(ValidateString v, String getter) {
     validations.add(ValidationItem(
       condition: '$getter != "true" && $getter != "false"',
       defaultMessage: 'Should be a "true" or "false"',
-      errorCode: 'ValidateString.isBool',
+      errorCode: 'ValidaString.isBool',
       param: null,
     ));
   }
@@ -657,7 +658,7 @@ List<ValidationItem> stringValidations(ValidateString v, String getter) {
     validations.add(ValidationItem(
       condition: '!$getter.contains(r"${v.contains}")',
       defaultMessage: 'Should contain ${v.contains}',
-      errorCode: 'ValidateString.contains',
+      errorCode: 'ValidaString.contains',
       param: "r'${v.contains}'",
     ));
   }
@@ -665,7 +666,7 @@ List<ValidationItem> stringValidations(ValidateString v, String getter) {
     validations.add(ValidationItem(
       condition: '!RegExp(r"${v.matches}").hasMatch($getter)',
       defaultMessage: 'Should match ${v.matches}',
-      errorCode: 'ValidateString.matches',
+      errorCode: 'ValidaString.matches',
       param: 'RegExp(r"${v.matches}")',
     ));
   }

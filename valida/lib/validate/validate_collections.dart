@@ -2,27 +2,27 @@ import 'package:valida/validate/serde_type.dart';
 import 'package:valida/validate/validate.dart';
 import 'package:valida/validate/validate_annotations.dart';
 
-abstract class ValidateLength {
+abstract class ValidaLength {
   int? get minLength;
   int? get maxLength;
 }
 
-class ValidateList<T> extends ValidateField<List<T>> implements ValidateLength {
+class ValidaList<T> extends ValidaField<List<T>> implements ValidaLength {
   @override
   final int? minLength;
   @override
   final int? maxLength;
-  final ValidateField<T>? each;
+  final ValidaField<T>? each;
 
   @override
-  ValidateFieldType get variantType => ValidateFieldType.list;
+  ValidaFieldType get variantType => ValidaFieldType.list;
 
   @override
-  final List<ValidationError> Function(List<T>)? customValidate;
+  final List<ValidaError> Function(List<T>)? customValidate;
   @override
   final String? customValidateName;
 
-  const ValidateList({
+  const ValidaList({
     this.minLength,
     this.maxLength,
     this.each,
@@ -33,21 +33,21 @@ class ValidateList<T> extends ValidateField<List<T>> implements ValidateLength {
   @override
   Map<String, Object?> toJson() {
     return {
-      ValidateField.variantTypeString: variantType.toString(),
+      ValidaField.variantTypeString: variantType.toString(),
       'minLength': minLength,
       'maxLength': maxLength,
       'each': each?.toJson(),
     };
   }
 
-  factory ValidateList.fromJson(Map<String, Object?> map) {
-    return ValidateList(
+  factory ValidaList.fromJson(Map<String, Object?> map) {
+    return ValidaList(
       minLength: map['minLength'] as int?,
       maxLength: map['maxLength'] as int?,
       each: map['each'] == null
           ? null
-          : (ValidateField.fromJson(map['each']! as Map<String, Object?>)
-              as ValidateField<T>),
+          : (ValidaField.fromJson(map['each']! as Map<String, Object?>)
+              as ValidaField<T>),
       customValidateName: map['customValidate'] as String?,
     );
   }
@@ -55,27 +55,27 @@ class ValidateList<T> extends ValidateField<List<T>> implements ValidateLength {
   static const fieldsSerde = {
     'minLength': SerdeType.int,
     'maxLength': SerdeType.int,
-    'each': ValidateField.fieldsSerde,
+    'each': ValidaField.fieldsSerde,
     'customValidate': SerdeType.function,
   };
 }
 
-class ValidateSet<T> extends ValidateField<Set<T>> implements ValidateLength {
+class ValidaSet<T> extends ValidaField<Set<T>> implements ValidaLength {
   @override
   final int? minLength;
   @override
   final int? maxLength;
-  final ValidateField<T>? each;
+  final ValidaField<T>? each;
 
   @override
-  ValidateFieldType get variantType => ValidateFieldType.set;
+  ValidaFieldType get variantType => ValidaFieldType.set;
 
   @override
-  final List<ValidationError> Function(Set<T>)? customValidate;
+  final List<ValidaError> Function(Set<T>)? customValidate;
   @override
   final String? customValidateName;
 
-  const ValidateSet({
+  const ValidaSet({
     this.minLength,
     this.maxLength,
     this.each,
@@ -86,7 +86,7 @@ class ValidateSet<T> extends ValidateField<Set<T>> implements ValidateLength {
   @override
   Map<String, Object?> toJson() {
     return {
-      ValidateField.variantTypeString: variantType.toString(),
+      ValidaField.variantTypeString: variantType.toString(),
       'minLength': minLength,
       'maxLength': maxLength,
       'each': each?.toJson(),
@@ -94,14 +94,14 @@ class ValidateSet<T> extends ValidateField<Set<T>> implements ValidateLength {
     };
   }
 
-  factory ValidateSet.fromJson(Map<String, Object?> map) {
-    return ValidateSet(
+  factory ValidaSet.fromJson(Map<String, Object?> map) {
+    return ValidaSet(
       minLength: map['minLength'] as int?,
       maxLength: map['maxLength'] as int?,
       each: map['each'] == null
           ? null
-          : (ValidateField.fromJson(map['each']! as Map<String, Object?>)
-              as ValidateField<T>),
+          : (ValidaField.fromJson(map['each']! as Map<String, Object?>)
+              as ValidaField<T>),
       customValidateName: map['customValidate'] as String?,
     );
   }
@@ -109,29 +109,29 @@ class ValidateSet<T> extends ValidateField<Set<T>> implements ValidateLength {
   static const fieldsSerde = {
     'minLength': SerdeType.int,
     'maxLength': SerdeType.int,
-    'each': ValidateField.fieldsSerde,
+    'each': ValidaField.fieldsSerde,
     'customValidate': SerdeType.function,
   };
 }
 
-class ValidateMap<K, V> extends ValidateField<Map<K, V>>
-    implements ValidateLength {
+class ValidaMap<K, V> extends ValidaField<Map<K, V>>
+    implements ValidaLength {
   @override
   final int? minLength;
   @override
   final int? maxLength;
-  final ValidateField<K>? eachKey;
-  final ValidateField<V>? eachValue;
+  final ValidaField<K>? eachKey;
+  final ValidaField<V>? eachValue;
 
   @override
-  ValidateFieldType get variantType => ValidateFieldType.map;
+  ValidaFieldType get variantType => ValidaFieldType.map;
 
   @override
-  final List<ValidationError> Function(Map<K, V>)? customValidate;
+  final List<ValidaError> Function(Map<K, V>)? customValidate;
   @override
   final String? customValidateName;
 
-  const ValidateMap({
+  const ValidaMap({
     this.minLength,
     this.maxLength,
     this.eachKey,
@@ -143,7 +143,7 @@ class ValidateMap<K, V> extends ValidateField<Map<K, V>>
   @override
   Map<String, Object?> toJson() {
     return {
-      ValidateField.variantTypeString: variantType.toString(),
+      ValidaField.variantTypeString: variantType.toString(),
       'minLength': minLength,
       'maxLength': maxLength,
       'eachKey': eachKey?.toJson(),
@@ -152,18 +152,18 @@ class ValidateMap<K, V> extends ValidateField<Map<K, V>>
     };
   }
 
-  factory ValidateMap.fromJson(Map<String, Object?> map) {
-    return ValidateMap(
+  factory ValidaMap.fromJson(Map<String, Object?> map) {
+    return ValidaMap(
       minLength: map['minLength'] as int?,
       maxLength: map['maxLength'] as int?,
       eachKey: map['eachKey'] == null
           ? null
-          : (ValidateField.fromJson(map['eachKey']! as Map<String, Object?>)
-              as ValidateField<K>),
+          : (ValidaField.fromJson(map['eachKey']! as Map<String, Object?>)
+              as ValidaField<K>),
       eachValue: map['eachValue'] == null
           ? null
-          : (ValidateField.fromJson(map['eachValue']! as Map<String, Object?>)
-              as ValidateField<V>),
+          : (ValidaField.fromJson(map['eachValue']! as Map<String, Object?>)
+              as ValidaField<V>),
       customValidateName: map['customValidate'] as String?,
     );
   }
@@ -171,8 +171,8 @@ class ValidateMap<K, V> extends ValidateField<Map<K, V>>
   static const fieldsSerde = {
     'minLength': SerdeType.int,
     'maxLength': SerdeType.int,
-    'eachKey': ValidateField.fieldsSerde,
-    'eachValue': ValidateField.fieldsSerde,
+    'eachKey': ValidaField.fieldsSerde,
+    'eachValue': ValidaField.fieldsSerde,
     'customValidate': SerdeType.function,
   };
 }

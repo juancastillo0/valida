@@ -8,17 +8,17 @@ export 'models/comp_val.dart';
 export 'validate_collections.dart';
 export 'validate_string.dart';
 
-class Validate implements ValidateCustom<Object?> {
+class Valida implements ValidaCustom<Object?> {
   final bool nullableErrorLists;
   final bool constErrors;
   final bool enumFields;
 
   @override
-  final List<ValidationError> Function(Object?)? customValidate;
+  final List<ValidaError> Function(Object?)? customValidate;
   @override
   final String? customValidateName;
 
-  const Validate({
+  const Valida({
     bool? nullableErrorLists,
     bool? constErrors,
     bool? enumFields,
@@ -44,8 +44,8 @@ class Validate implements ValidateCustom<Object?> {
     };
   }
 
-  factory Validate.fromJson(Map<String, Object?> map) {
-    return Validate(
+  factory Valida.fromJson(Map<String, Object?> map) {
+    return Valida(
       nullableErrorLists: map['nullableErrorLists'] as bool?,
       constErrors: map['constErrors'] as bool?,
       enumFields: map['enumFields'] as bool?,
@@ -54,11 +54,11 @@ class Validate implements ValidateCustom<Object?> {
   }
 }
 
-class ValidationFunction {
-  const ValidationFunction();
+class ValidaFunction {
+  const ValidaFunction();
 }
 
-enum ValidateFieldType {
+enum ValidaFieldType {
   num,
   string,
   date,
@@ -68,8 +68,8 @@ enum ValidateFieldType {
   set,
 }
 
-ValidateFieldType parseValidateFieldType(String raw) {
-  for (final v in ValidateFieldType.values) {
+ValidaFieldType parseValidaFieldType(String raw) {
+  for (final v in ValidaFieldType.values) {
     final str = v.toString();
     if (str == raw || str.split('.')[1] == raw) {
       return v;
@@ -78,23 +78,23 @@ ValidateFieldType parseValidateFieldType(String raw) {
   throw Error();
 }
 
-abstract class ValidateCustom<T> {
-  List<ValidationError> Function(T)? get customValidate;
+abstract class ValidaCustom<T> {
+  List<ValidaError> Function(T)? get customValidate;
   String? get customValidateName;
 }
 
-abstract class ValidateComparable<T extends Comparable<T>> {
-  ValidateComparison<T>? get comp;
+abstract class ValidaComparable<T extends Comparable<T>> {
+  ValidaComparison<T>? get comp;
 }
 
-class ValidateComparison<T extends Comparable<T>> {
+class ValidaComparison<T extends Comparable<T>> {
   final bool useCompareTo;
   final CompVal<T>? more;
   final CompVal<T>? less;
   final CompVal<T>? moreEq;
   final CompVal<T>? lessEq;
 
-  const ValidateComparison({
+  const ValidaComparison({
     this.more,
     this.less,
     this.moreEq,
@@ -120,8 +120,8 @@ class ValidateComparison<T extends Comparable<T>> {
     };
   }
 
-  factory ValidateComparison.fromJson(Map<String, Object?> map) {
-    return ValidateComparison<T>(
+  factory ValidaComparison.fromJson(Map<String, Object?> map) {
+    return ValidaComparison<T>(
       more: map['more'] == null ? null : CompVal.fromJson<T>(map['more']),
       less: map['less'] == null ? null : CompVal.fromJson<T>(map['less']),
       moreEq: map['moreEq'] == null ? null : CompVal.fromJson<T>(map['moreEq']),
@@ -166,102 +166,100 @@ class ValidateComparison<T extends Comparable<T>> {
 //   const CompValMany(this.values) : super._();
 // }
 
-abstract class ValidateField<T> implements ValidateCustom<T> {
-  const ValidateField();
+abstract class ValidaField<T> implements ValidaCustom<T> {
+  const ValidaField();
 
   Map<String, Object?> toJson();
 
-  ValidateFieldType get variantType;
+  ValidaFieldType get variantType;
 
   static const variantTypeString = 'variantType';
 
   static const fieldsSerde = SerdeType.late(_makeFieldsSerde);
   static SerdeType _makeFieldsSerde() {
     return const SerdeType.union(
-      ValidateField.variantTypeString,
+      ValidaField.variantTypeString,
       {
-        'num': SerdeType.nested(ValidateNum.fieldsSerde),
-        'string': SerdeType.nested(ValidateString.fieldsSerde),
-        'date': SerdeType.nested(ValidateDate.fieldsSerde),
-        'duration': SerdeType.nested(ValidateDuration.fieldsSerde),
-        'list': SerdeType.nested(ValidateList.fieldsSerde),
-        'set': SerdeType.nested(ValidateSet.fieldsSerde),
-        'map': SerdeType.nested(ValidateMap.fieldsSerde),
+        'num': SerdeType.nested(ValidaNum.fieldsSerde),
+        'string': SerdeType.nested(ValidaString.fieldsSerde),
+        'date': SerdeType.nested(ValidaDate.fieldsSerde),
+        'duration': SerdeType.nested(ValidaDuration.fieldsSerde),
+        'list': SerdeType.nested(ValidaList.fieldsSerde),
+        'set': SerdeType.nested(ValidaSet.fieldsSerde),
+        'map': SerdeType.nested(ValidaMap.fieldsSerde),
       },
     );
   }
 
   _T when<_T>({
-    required _T Function(ValidateString) string,
-    required _T Function(ValidateNum) num,
-    required _T Function(ValidateDate) date,
-    required _T Function(ValidateDuration) duration,
-    required _T Function(ValidateList) list,
-    required _T Function(ValidateMap) map,
-    required _T Function(ValidateSet) set,
+    required _T Function(ValidaString) string,
+    required _T Function(ValidaNum) num,
+    required _T Function(ValidaDate) date,
+    required _T Function(ValidaDuration) duration,
+    required _T Function(ValidaList) list,
+    required _T Function(ValidaMap) map,
+    required _T Function(ValidaSet) set,
   }) {
     switch (variantType) {
-      case ValidateFieldType.string:
-        return string(this as ValidateString);
-      case ValidateFieldType.num:
-        return num(this as ValidateNum);
-      case ValidateFieldType.date:
-        return date(this as ValidateDate);
-      case ValidateFieldType.duration:
-        return duration(this as ValidateDuration);
-      case ValidateFieldType.list:
-        return list(this as ValidateList);
-      case ValidateFieldType.map:
-        return map(this as ValidateMap);
-      case ValidateFieldType.set:
-        return set(this as ValidateSet);
+      case ValidaFieldType.string:
+        return string(this as ValidaString);
+      case ValidaFieldType.num:
+        return num(this as ValidaNum);
+      case ValidaFieldType.date:
+        return date(this as ValidaDate);
+      case ValidaFieldType.duration:
+        return duration(this as ValidaDuration);
+      case ValidaFieldType.list:
+        return list(this as ValidaList);
+      case ValidaFieldType.map:
+        return map(this as ValidaMap);
+      case ValidaFieldType.set:
+        return set(this as ValidaSet);
     }
   }
 
-  static ValidateField<Object?> fromJson(Map<String, Object?> map) {
-    final type = parseValidateFieldType(
-      (map[ValidateField.variantTypeString] ??
-          map['runtimeType'] ??
-          map['type'])! as String,
+  static ValidaField<Object?> fromJson(Map<String, Object?> map) {
+    final type = parseValidaFieldType(
+      (map[ValidaField.variantTypeString] ?? map['runtimeType'] ?? map['type'])!
+          as String,
     );
     switch (type) {
-      case ValidateFieldType.string:
-        return ValidateString.fromJson(map);
-      case ValidateFieldType.num:
-        return ValidateNum.fromJson(map);
-      case ValidateFieldType.date:
-        return ValidateDate.fromJson(map);
-      case ValidateFieldType.duration:
-        return ValidateDuration.fromJson(map);
-      case ValidateFieldType.list:
-        return ValidateList<Object?>.fromJson(map);
-      case ValidateFieldType.map:
-        return ValidateMap<Object?, Object?>.fromJson(map);
-      case ValidateFieldType.set:
-        return ValidateSet<Object?>.fromJson(map);
+      case ValidaFieldType.string:
+        return ValidaString.fromJson(map);
+      case ValidaFieldType.num:
+        return ValidaNum.fromJson(map);
+      case ValidaFieldType.date:
+        return ValidaDate.fromJson(map);
+      case ValidaFieldType.duration:
+        return ValidaDuration.fromJson(map);
+      case ValidaFieldType.list:
+        return ValidaList<Object?>.fromJson(map);
+      case ValidaFieldType.map:
+        return ValidaMap<Object?, Object?>.fromJson(map);
+      case ValidaFieldType.set:
+        return ValidaSet<Object?>.fromJson(map);
     }
   }
 }
 
-class ValidateNum extends ValidateField<num>
-    implements ValidateComparable<num> {
+class ValidaNum extends ValidaField<num> implements ValidaComparable<num> {
   final List<num>? isIn; // enum
   final num? min;
   final num? max;
   final bool? isInt;
   final num? isDivisibleBy;
   @override
-  final ValidateComparison<num>? comp;
+  final ValidaComparison<num>? comp;
 
   @override
-  ValidateFieldType get variantType => ValidateFieldType.num;
+  ValidaFieldType get variantType => ValidaFieldType.num;
 
   @override
-  final List<ValidationError> Function(num)? customValidate;
+  final List<ValidaError> Function(num)? customValidate;
   @override
   final String? customValidateName;
 
-  const ValidateNum({
+  const ValidaNum({
     this.isIn,
     this.min,
     this.max,
@@ -279,13 +277,13 @@ class ValidateNum extends ValidateField<num>
     'isIn': SerdeType.list(SerdeType.num),
     'isDivisibleBy': SerdeType.num,
     'customValidate': SerdeType.function,
-    'comp': ValidateComparison.fieldsSerde,
+    'comp': ValidaComparison.fieldsSerde,
   };
 
   @override
   Map<String, Object?> toJson() {
     return {
-      ValidateField.variantTypeString: variantType.toString(),
+      ValidaField.variantTypeString: variantType.toString(),
       'isIn': isIn,
       'min': min,
       'max': max,
@@ -296,8 +294,8 @@ class ValidateNum extends ValidateField<num>
     };
   }
 
-  factory ValidateNum.fromJson(Map<String, Object?> map) {
-    return ValidateNum(
+  factory ValidaNum.fromJson(Map<String, Object?> map) {
+    return ValidaNum(
       isIn: map['isIn'] == null ? null : List<num>.from(map['isIn']! as List),
       min: map['min'] as int?,
       max: map['max'] as int?,
@@ -306,28 +304,28 @@ class ValidateNum extends ValidateField<num>
       customValidateName: map['customValidate'] as String?,
       comp: map['comp'] == null
           ? null
-          : ValidateComparison.fromJson(map['comp']! as Map<String, Object?>),
+          : ValidaComparison.fromJson(map['comp']! as Map<String, Object?>),
     );
   }
 }
 
-class ValidateDuration extends ValidateField<Duration>
-    implements ValidateComparable<Duration> {
+class ValidaDuration extends ValidaField<Duration>
+    implements ValidaComparable<Duration> {
   final Duration? min;
   final Duration? max;
 
   @override
-  ValidateFieldType get variantType => ValidateFieldType.duration;
+  ValidaFieldType get variantType => ValidaFieldType.duration;
 
   @override
-  final List<ValidationError> Function(Duration)? customValidate;
+  final List<ValidaError> Function(Duration)? customValidate;
   @override
   final String? customValidateName;
 
   @override
-  final ValidateComparison<Duration>? comp;
+  final ValidaComparison<Duration>? comp;
 
-  const ValidateDuration({
+  const ValidaDuration({
     this.min,
     this.max,
     this.customValidate,
@@ -339,13 +337,13 @@ class ValidateDuration extends ValidateField<Duration>
     'min': SerdeType.duration,
     'max': SerdeType.duration,
     'customValidate': SerdeType.function,
-    'comp': ValidateComparison.fieldsSerde,
+    'comp': ValidaComparison.fieldsSerde,
   };
 
   @override
   Map<String, Object?> toJson() {
     return {
-      ValidateField.variantTypeString: variantType.toString(),
+      ValidaField.variantTypeString: variantType.toString(),
       'min': min?.inMicroseconds,
       'max': max?.inMicroseconds,
       'customValidate': customValidateName,
@@ -353,8 +351,8 @@ class ValidateDuration extends ValidateField<Duration>
     };
   }
 
-  factory ValidateDuration.fromJson(Map<String, Object?> map) {
-    return ValidateDuration(
+  factory ValidaDuration.fromJson(Map<String, Object?> map) {
+    return ValidaDuration(
       min: map['min'] == null
           ? null
           : Duration(microseconds: map['min']! as int),
@@ -364,28 +362,28 @@ class ValidateDuration extends ValidateField<Duration>
       customValidateName: map['customValidate'] as String?,
       comp: map['comp'] == null
           ? null
-          : ValidateComparison.fromJson(map['comp']! as Map<String, Object?>),
+          : ValidaComparison.fromJson(map['comp']! as Map<String, Object?>),
     );
   }
 }
 
-class ValidateDate extends ValidateField<DateTime>
-    implements ValidateComparable<String> {
+class ValidaDate extends ValidaField<DateTime>
+    implements ValidaComparable<String> {
   final String? min;
   final String? max;
 
   @override
-  ValidateFieldType get variantType => ValidateFieldType.date;
+  ValidaFieldType get variantType => ValidaFieldType.date;
 
   @override
-  final List<ValidationError> Function(DateTime)? customValidate;
+  final List<ValidaError> Function(DateTime)? customValidate;
   @override
   final String? customValidateName;
 
   @override
-  final ValidateComparison<String>? comp;
+  final ValidaComparison<String>? comp;
 
-  const ValidateDate({
+  const ValidaDate({
     this.min,
     this.max,
     this.customValidate,
@@ -397,13 +395,13 @@ class ValidateDate extends ValidateField<DateTime>
     'min': SerdeType.str,
     'max': SerdeType.str,
     'customValidate': SerdeType.function,
-    'comp': ValidateComparison.fieldsSerde,
+    'comp': ValidaComparison.fieldsSerde,
   };
 
   @override
   Map<String, Object?> toJson() {
     return {
-      ValidateField.variantTypeString: variantType.toString(),
+      ValidaField.variantTypeString: variantType.toString(),
       'min': min,
       'max': max,
       'customValidate': customValidateName,
@@ -411,14 +409,14 @@ class ValidateDate extends ValidateField<DateTime>
     };
   }
 
-  factory ValidateDate.fromJson(Map<String, Object?> map) {
-    return ValidateDate(
+  factory ValidaDate.fromJson(Map<String, Object?> map) {
+    return ValidaDate(
       min: map['min'] as String?,
       max: map['max'] as String?,
       customValidateName: map['customValidate'] as String?,
       comp: map['comp'] == null
           ? null
-          : ValidateComparison.fromJson(map['comp']! as Map<String, Object?>),
+          : ValidaComparison.fromJson(map['comp']! as Map<String, Object?>),
     );
   }
 }
