@@ -7,10 +7,6 @@ part 'model.g.dart';
 // custom validator ergonomics, for field and for class
 // nested validation execution and result
 
-List<ValidaError> _customValidateStr(String value) {
-  return [];
-}
-
 @Valida(nullableErrorLists: true, customValidate: FormTest._customValidate)
 class FormTest {
   static List<ValidaError> _customValidate(Object? value) {
@@ -80,6 +76,19 @@ class FormTest {
     required this.identifier,
     this.nested,
   });
+}
+
+List<ValidaError> _customValidateStr(String value) {
+  // Validate `value` and return a list of errors
+  return [
+    if (value == 'WrongValue')
+      ValidaError(
+        errorCode: 'CustomError.wrong',
+        message: 'WrongValue is not allowed',
+        property: 'longStr',
+        value: value,
+      ),
+  ];
 }
 
 @Valida()

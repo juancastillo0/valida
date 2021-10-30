@@ -1,3 +1,4 @@
+import 'package:valida/valida.dart';
 import 'package:valida_example/model.dart';
 import 'package:test/test.dart';
 
@@ -12,22 +13,23 @@ void main() {
       identifier: 'identifier',
     );
 
-    final errors = validateFormTest(form);
-    expect(errors.numErrors, errors.allErrors.length);
-    expect(errors.hasErrors, true);
+    final FormTestValidation validation = validateFormTest(form);
+    assert(validation is Validation<FormTest, FormTestField>);
+    expect(validation.numErrors, validation.allErrors.length);
+    expect(validation.hasErrors, true);
 
-    final errorsMap = errors.errorsMap;
+    final errorsMap = validation.errorsMap;
     expect(errorsMap.isNotEmpty, true);
 
     expect(errorsMap[FormTestField.longStr]?.length, 2);
-    expect(errors.fields.longStr!.length, 2);
+    expect(validation.fields.longStr!.length, 2);
     expect(errorsMap[FormTestField.shortStr]?.length, 1);
-    expect(errors.fields.shortStr!.length, 1);
+    expect(validation.fields.shortStr!.length, 1);
     expect(errorsMap[FormTestField.positiveInt]?.length, 1);
-    expect(errors.fields.positiveInt!.length, 1);
+    expect(validation.fields.positiveInt!.length, 1);
     expect(errorsMap[FormTestField.nonEmptyList]?.length, 1);
-    expect(errors.fields.nonEmptyList!.length, 1);
+    expect(validation.fields.nonEmptyList!.length, 1);
     expect(errorsMap[FormTestField.optionalDecimal]?.length, 2);
-    expect(errors.fields.optionalDecimal!.length, 2);
+    expect(validation.fields.optionalDecimal!.length, 2);
   });
 }

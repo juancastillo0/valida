@@ -6,12 +6,13 @@ Validators for Dart and Flutter. Includes a code generator for validating classe
 
 
 Add to pubspec.yaml
+
 ```yaml
 dependencies:
-    valida: ^0.1
+    valida: ^0.0.1
 dependencies:
     build_runner: <latest>
-    valida_generator: ^0.1
+    valida_generator: ^0.0.1
 ```
 
 Run `pub get` and create your model class:
@@ -21,17 +22,13 @@ import 'package:valida/valida.dart';
 
 part 'model.g.dart';
 
-List<ValidationError> _customValidateStr(String value) {
-  return [];
-}
-
-@Validate(nullableErrorLists: true, customValidate: FormTest._customValidate)
+@Valida(nullableErrorLists: true, customValidate: FormTest._customValidate)
 class FormTest {
-  static List<ValidationError> _customValidate(Object? value) {
+  static List<ValidaError> _customValidate(Object? value) {
     return [];
   }
 
-  @ValidateString(
+  @ValidaString(
     minLength: 15,
     maxLength: 50,
     matches: r'^[a-zA-Z]+$',
@@ -39,21 +36,21 @@ class FormTest {
   )
   final String longStr;
 
-  @ValidateString(maxLength: 20, contains: '@')
+  @ValidaString(maxLength: 20, contains: '@')
   final String shortStr;
 
-  @ValidateNum(isInt: true, min: 0, customValidate: _customValidateNum)
+  @ValidaNum(isInt: true, min: 0, customValidate: _customValidateNum)
   final num positiveInt;
 
-  static List<ValidationError> _customValidateNum(num value) {
+  static List<ValidaError> _customValidateNum(num value) {
     return [];
   }
 
-  @ValidationFunction()
-  static List<ValidationError> _customValidate2(FormTest value) {
+  @ValidaFunction()
+  static List<ValidaError> _customValidate2(FormTest value) {
     return [
       if (value.optionalDecimal == null && value.identifier == null)
-        ValidationError(
+        ValidaError(
           errorCode: 'CustomError.not',
           message: 'CustomError message',
           property: 'identifier',
@@ -62,25 +59,25 @@ class FormTest {
     ];
   }
 
-  @ValidationFunction()
-  List<ValidationError> _customValidate3() {
+  @ValidaFunction()
+  List<ValidaError> _customValidate3() {
     return _customValidate2(this);
   }
 
-  @ValidateNum(
+  @ValidaNum(
     min: 0,
     max: 1,
-    comp: ValidateComparison<num>(
+    comp: ValidaComparison<num>(
       less: CompVal(0),
       moreEq: CompVal.list([CompVal.ref('positiveInt')]),
     ),
   )
   final double? optionalDecimal;
 
-  @ValidateList(minLength: 1, each: ValidateString(isDate: true, maxLength: 3))
+  @ValidaList(minLength: 1, each: ValidaString(isDate: true, maxLength: 3))
   final List<String> nonEmptyList;
 
-  @ValidateString(isUUID: UUIDVersion.v4)
+  @ValidaString(isUUID: UUIDVersion.v4)
   final String? identifier;
 
   final NestedField? nested;
@@ -96,15 +93,29 @@ class FormTest {
   });
 }
 
-@Validate()
+List<ValidaError> _customValidateStr(String value) {
+  // Validate `value` and return a list of errors
+  return [
+    if (value == 'WrongValue')
+      ValidaError(
+        errorCode: 'CustomError.wrong',
+        message: 'WrongValue is not allowed',
+        property: 'longStr',
+        value: value,
+      ),
+  ];
+}
+
+
+@Valida()
 class NestedField {
-  @ValidateString(isTime: true)
+  @ValidaString(isTime: true)
   final String timeStr;
 
-  @ValidateDate(min: '2021-01-01')
+  @ValidaDate(min: '2021-01-01')
   final DateTime dateWith2021Min;
 
-  @ValidateDate(max: 'now')
+  @ValidaDate(max: 'now')
   final DateTime? optionalDateWithNowMax;
 
   NestedField({
@@ -113,21 +124,22 @@ class NestedField {
     required this.optionalDateWithNowMax,
   });
 }
-```
-
-Execute build_runner
 
 ```
-flutter pub run build_runner watch --delete-conflicting-outputs
+
+Execute build_runner to generate the validation code
+
+```
+dart pub run build_runner watch --delete-conflicting-outputs
 ```
 
-Use the generated `validateFormTest` with yout model
+Use the generated `validateFormTest` with your model
 
 ```dart
 import 'model.dart'
 
 void main() {
-    final form = FormTest(
+    const form = FormTest(
       longStr: 'long Str',
       shortStr: 'shortStr',
       positiveInt: 2.4,
@@ -136,29 +148,203 @@ void main() {
       identifier: 'identifier',
     );
 
-    final errors = validateFormTest(form);
-    assert(errors.numErrors == errors.allErrors.length);
-    assert(errors.hasErrors == true);
-    assert(errors.fields.nonEmptyList != null);
+    final FormTestValidation validation = validateFormTest(form);
+    assert(validation is Validation<FormTest, FormTestField>);
+    expect(validation.numErrors, validation.allErrors.length);
+    expect(validation.hasErrors, true);
 
-    final errorsMap = errors.errorsMap;
+    final errorsMap = validation.errorsMap;
+    expect(errorsMap.isNotEmpty, true);
 
-    assert(errorsMap.isNotEmpty == true);
-    assert(errorsMap['longStr']?.length == 2);
-    assert(errorsMap['shortStr']?.length == 1);
-    assert(errorsMap['positiveInt']?.length == 1);
-    assert(errorsMap['nonEmptyList']?.length == 1);
-    assert(errorsMap['optionalDecimal']?.length == 1);
+    expect(errorsMap[FormTestField.longStr]?.length, 2);
+    expect(validation.fields.longStr!.length, 2);
+    expect(errorsMap[FormTestField.shortStr]?.length, 1);
+    expect(validation.fields.shortStr!.length, 1);
+    expect(errorsMap[FormTestField.positiveInt]?.length, 1);
+    expect(validation.fields.positiveInt!.length, 1);
+    expect(errorsMap[FormTestField.nonEmptyList]?.length, 1);
+    expect(validation.fields.nonEmptyList!.length, 1);
+    expect(errorsMap[FormTestField.optionalDecimal]?.length, 2);
+    expect(validation.fields.optionalDecimal!.length, 2);
 }
 ```
 
-## Getting Started
+The code generator produces the following output
 
-This project is a starting point for a Dart
-[package](https://flutter.dev/developing-packages/),
-a library module containing code that can be shared easily across
-multiple Flutter or Dart projects.
+- A function `ModelValidation validateModel(Model)`, that executes the validation
+- `ModelValidation` which extends `Validation<Model, ModelField>`, has utility getters for the number of errors, the validated value, whether the validation was successful or not and a `ModelValidationFields` getter
+- An enum `ModelField` of the fields for the validated class
+- A utility `ModelValidationFields` class which contains named getters for the errors of each field
 
-For help getting started with Flutter, view our 
-[online documentation](https://flutter.dev/docs), which offers tutorials, 
-samples, guidance on mobile development, and a full API reference.
+
+```dart
+
+enum FormTestField {
+  longStr,
+  shortStr,
+  positiveInt,
+  optionalDecimal,
+  nonEmptyList,
+  identifier,
+  nested,
+  global,
+}
+
+class FormTestValidationFields {
+  const FormTestValidationFields(this.errorsMap);
+  final Map<FormTestField, List<ValidaError>> errorsMap;
+
+  NestedFieldValidation? get nested {
+    final l = errorsMap[FormTestField.nested];
+    return (l != null && l.isNotEmpty)
+        ? l.first.nestedValidation as NestedFieldValidation?
+        : null;
+  }
+
+  List<ValidaError>? get longStr => errorsMap[FormTestField.longStr];
+  List<ValidaError>? get shortStr => errorsMap[FormTestField.shortStr];
+  List<ValidaError>? get positiveInt => errorsMap[FormTestField.positiveInt];
+  List<ValidaError>? get optionalDecimal =>
+      errorsMap[FormTestField.optionalDecimal];
+  List<ValidaError>? get nonEmptyList => errorsMap[FormTestField.nonEmptyList];
+  List<ValidaError>? get identifier => errorsMap[FormTestField.identifier];
+}
+
+class FormTestValidation extends Validation<FormTest, FormTestField> {
+  FormTestValidation(this.errorsMap, this.value, this.fields)
+      : super(errorsMap);
+
+  final Map<FormTestField, List<ValidaError>> errorsMap;
+
+  final FormTest value;
+
+  final FormTestValidationFields fields;
+}
+
+FormTestValidation validateFormTest(FormTest value) {
+  final errors = <FormTestField, List<ValidaError>>{};
+
+  final _nestedValidation = value.nested == null
+      ? null
+      : validateNestedField(value.nested!).toError(property: 'nested');
+  errors[FormTestField.nested] = [
+    if (_nestedValidation != null) _nestedValidation
+  ];
+
+  errors[FormTestField.global] = [
+    ...FormTest._customValidate2(value),
+    ...value._customValidate3()
+  ];
+  errors[FormTestField.longStr] = [
+    ..._customValidateStr(value.longStr),
+    if (value.longStr.length < 15)
+      ValidaError(
+        message: r'Should be at a minimum 15 in length',
+        errorCode: 'ValidaString.minLength',
+        property: 'longStr',
+        validationParam: 15,
+        value: value.longStr,
+      ),
+    if (value.longStr.length > 50)
+      ValidaError(
+        message: r'Should be at a maximum 50 in length',
+        errorCode: 'ValidaString.maxLength',
+        property: 'longStr',
+        validationParam: 50,
+        value: value.longStr,
+      ),
+    if (!RegExp(r"^[a-zA-Z]+$").hasMatch(value.longStr))
+      ValidaError(
+        message: r'Should match ^[a-zA-Z]+$',
+        errorCode: 'ValidaString.matches',
+        property: 'longStr',
+        validationParam: RegExp(r"^[a-zA-Z]+$"),
+        value: value.longStr,
+      )
+  ];
+  // ...
+  // More validations
+  // ...
+  errors[FormTestField.nonEmptyList] = [
+    if (value.nonEmptyList.length < 1)
+      ValidaError(
+        message: r'Should be at a minimum 1 in length',
+        errorCode: 'ValidaList.minLength',
+        property: 'nonEmptyList',
+        validationParam: 1,
+        value: value.nonEmptyList,
+      )
+  ];
+  errors.removeWhere((k, v) => v.isEmpty);
+
+  return FormTestValidation(
+    errors,
+    value,
+    FormTestValidationFields(errors),
+  );
+}
+
+enum NestedFieldField {
+  timeStr,
+  dateWith2021Min,
+  optionalDateWithNowMax,
+}
+
+class NestedFieldValidationFields {
+  const NestedFieldValidationFields(this.errorsMap);
+  final Map<NestedFieldField, List<ValidaError>> errorsMap;
+
+  List<ValidaError> get timeStr => errorsMap[NestedFieldField.timeStr]!;
+  List<ValidaError> get dateWith2021Min =>
+      errorsMap[NestedFieldField.dateWith2021Min]!;
+  List<ValidaError> get optionalDateWithNowMax =>
+      errorsMap[NestedFieldField.optionalDateWithNowMax]!;
+}
+
+class NestedFieldValidation extends Validation<NestedField, NestedFieldField> {
+  NestedFieldValidation(this.errorsMap, this.value, this.fields)
+      : super(errorsMap);
+
+  final Map<NestedFieldField, List<ValidaError>> errorsMap;
+
+  final NestedField value;
+
+  final NestedFieldValidationFields fields;
+}
+
+NestedFieldValidation validateNestedField(NestedField value) {
+  final errors = <NestedFieldField, List<ValidaError>>{};
+
+  errors[NestedFieldField.dateWith2021Min] = [
+    if (DateTime.fromMillisecondsSinceEpoch(1609459200000)
+        .isAfter(value.dateWith2021Min))
+      ValidaError(
+        message: r'Should be at a minimum 2021-01-01',
+        errorCode: 'ValidaDate.min',
+        property: 'dateWith2021Min',
+        validationParam: "2021-01-01",
+        value: value.dateWith2021Min,
+      )
+  ];
+  if (value.optionalDateWithNowMax == null)
+    errors[NestedFieldField.optionalDateWithNowMax] = [];
+  else
+    errors[NestedFieldField.optionalDateWithNowMax] = [
+      if (DateTime.now().isAfter(value.optionalDateWithNowMax!))
+        ValidaError(
+          message: r'Should be at a maximum now',
+          errorCode: 'ValidaDate.max',
+          property: 'optionalDateWithNowMax',
+          validationParam: "now",
+          value: value.optionalDateWithNowMax!,
+        )
+    ];
+
+  return NestedFieldValidation(
+    errors,
+    value,
+    NestedFieldValidationFields(errors),
+  );
+}
+
+```
