@@ -8,10 +8,13 @@ environment:
 
 dependencies:
   valida:
-    path: ../
 
 dev_dependencies:
   test:
   build_runner:
   valida_generator:
     path: ../../valida_generator/
+
+dependency_overrides:
+  valida:
+    path: ../../valida/
