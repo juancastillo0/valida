@@ -10,7 +10,7 @@ Add to pubspec.yaml
 ```yaml
 dependencies:
     valida: ^0.0.1
-dependencies:
+dev_dependencies:
     build_runner: <latest>
     valida_generator: ^0.0.1
 ```
