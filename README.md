@@ -1,6 +1,6 @@
 # valida
 
-Validators for Dart and Flutter. Includes a code generator for validating classes and functions.
+Validators for Dart and Flutter. Create field, params and object validators from code annotations.
 
 ## Getting Started
 

@@ -1,3 +1,14 @@
-## [0.0.1] - TODO: Add release date.
+## [0.0.1] - 2021-10-30.
 
-* TODO: Describe initial release.
+* Initial release
+* Basic types supported
+  * String
+  * int
+  * double
+  * List
+  * Map
+  * Set
+  * Classes
+  * Nested objects
+  * Date
+  * Duration
