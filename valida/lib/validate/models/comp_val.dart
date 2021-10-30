@@ -19,6 +19,7 @@ abstract class CompVal<T extends Comparable<T>> {
     );
   }
 
+  // ignore: sort_unnamed_constructors_first
   const factory CompVal(T value) = CompValueSingle<T>;
   const factory CompVal.ref(
     String ref,
@@ -120,8 +121,8 @@ abstract class CompVal<T extends Comparable<T>> {
       case 'list':
         return CompValueList.fromJson<T>(map);
       default:
-        throw Exception(
-            'Invalid discriminator for CompVal<T extends Comparable<T>>.fromJson '
+        throw Exception('Invalid discriminator for '
+            'CompVal<T extends Comparable<T>>.fromJson '
             '${map["variantType"]}. Input map: $map');
     }
   }
@@ -239,7 +240,7 @@ class CompValueRef<T extends Comparable<T>> extends CompVal<T> {
     }
 
     return CompValueRef<T>(
-      map['ref'] as String,
+      map['ref']! as String,
     );
   }
 
@@ -287,7 +288,7 @@ class CompValueSingle<T extends Comparable<T>> extends CompVal<T> {
     }
 
     return CompValueSingle<T>(
-      map['value'] as T,
+      map['value']! as T,
     );
   }
 

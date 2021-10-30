@@ -4,9 +4,10 @@ version: 0.0.1
 homepage: https://github.com/juancastillo0/valida
 
 environment:
-  sdk: ">=2.12.0-0 <3.0.0"
+  sdk: ">=2.12.0 <3.0.0"
 
 dependencies:
+  collection: ^1.0.0
   meta: ^1.0.0
   validators: ^3.0.0
 
