@@ -8,6 +8,13 @@ export 'models/comp_val.dart';
 export 'validate_collections.dart';
 export 'validate_string.dart';
 
+/// Specification of the validation that should be
+/// executed over a given class
+///
+/// if [nullableErrorLists] is true, the error lists for each
+/// field with be nullable
+/// if [constErrors] is true, the errors will be constant values
+/// if [enumFields] is true, the field type will be enums
 class Valida implements ValidaCustom<Object?> {
   final bool nullableErrorLists;
   final bool constErrors;
@@ -54,10 +61,12 @@ class Valida implements ValidaCustom<Object?> {
   }
 }
 
+/// A function with this annotation will be executed in the validation process
 class ValidaFunction {
   const ValidaFunction();
 }
 
+/// The type of value being validated
 enum ValidaFieldType {
   num,
   string,
@@ -78,15 +87,18 @@ ValidaFieldType parseValidaFieldType(String raw) {
   throw Error();
 }
 
+/// Interface for validators which accept a custom function
 abstract class ValidaCustom<T> {
   List<ValidaError> Function(T)? get customValidate;
   String? get customValidateName;
 }
 
+/// Interface for validators which are comparable
 abstract class ValidaComparable<T extends Comparable<T>> {
   ValidaComparison<T>? get comp;
 }
 
+/// The comparison for validators which are comparable
 class ValidaComparison<T extends Comparable<T>> {
   final bool useCompareTo;
   final CompVal<T>? more;
@@ -166,6 +178,7 @@ class ValidaComparison<T extends Comparable<T>> {
 //   const CompValMany(this.values) : super._();
 // }
 
+/// Interface for validators which are fields of a class
 abstract class ValidaField<T> implements ValidaCustom<T> {
   const ValidaField();
 
@@ -242,6 +255,8 @@ abstract class ValidaField<T> implements ValidaCustom<T> {
   }
 }
 
+/// Specification of the validation that should be
+/// executed over a given number
 class ValidaNum extends ValidaField<num> implements ValidaComparable<num> {
   final List<num>? isIn; // enum
   final num? min;
@@ -309,6 +324,8 @@ class ValidaNum extends ValidaField<num> implements ValidaComparable<num> {
   }
 }
 
+/// Specification of the validation that should be
+/// executed over a given Duration
 class ValidaDuration extends ValidaField<Duration>
     implements ValidaComparable<Duration> {
   final Duration? min;
@@ -367,6 +384,8 @@ class ValidaDuration extends ValidaField<Duration>
   }
 }
 
+/// Specification of the validation that should be
+/// executed over a given Date
 class ValidaDate extends ValidaField<DateTime>
     implements ValidaComparable<String> {
   final String? min;

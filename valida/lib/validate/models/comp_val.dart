@@ -3,6 +3,10 @@ import 'dart:convert';
 import 'package:valida/serde_type.dart';
 import 'package:meta/meta.dart';
 
+/// A value in a comparison
+///
+/// [CompVal.ref] is a reference to another field
+/// [CompVal.list] accept multiple values in the comparison
 @immutable
 abstract class CompVal<T extends Comparable<T>> {
   const CompVal._();

@@ -2,11 +2,17 @@ import 'package:valida/serde_type.dart';
 import 'package:valida/validate/validate.dart';
 import 'package:valida/validate/validate_annotations.dart';
 
+
+/// Specification of the validation that should be
+/// executed over a given value which has length
 abstract class ValidaLength {
   int? get minLength;
   int? get maxLength;
 }
 
+
+/// Specification of the validation that should be
+/// executed over a given List
 class ValidaList<T> extends ValidaField<List<T>> implements ValidaLength {
   @override
   final int? minLength;
@@ -60,6 +66,9 @@ class ValidaList<T> extends ValidaField<List<T>> implements ValidaLength {
   };
 }
 
+
+/// Specification of the validation that should be
+/// executed over a given Set
 class ValidaSet<T> extends ValidaField<Set<T>> implements ValidaLength {
   @override
   final int? minLength;
@@ -114,6 +123,9 @@ class ValidaSet<T> extends ValidaField<Set<T>> implements ValidaLength {
   };
 }
 
+
+/// Specification of the validation that should be
+/// executed over a given Map
 class ValidaMap<K, V> extends ValidaField<Map<K, V>> implements ValidaLength {
   @override
   final int? minLength;

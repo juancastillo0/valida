@@ -2,11 +2,13 @@ import 'package:valida/serde_type.dart';
 import 'package:valida/validate/validate.dart';
 import 'package:valida/validate/validate_annotations.dart';
 
+/// Different IP versions
 enum IPVersion {
   v4,
   v6,
 }
 
+/// Different UUID versions
 enum UUIDVersion {
   v3,
   v4,
@@ -14,8 +16,11 @@ enum UUIDVersion {
   all,
 }
 
+/// Different ISBN versions
 enum ISBNVersion { v10, v13 }
 
+/// Specification of the validation that should be
+/// executed over a given string
 class ValidaString extends ValidaField<String> implements ValidaLength {
   final List<String>? isIn; // enum
 

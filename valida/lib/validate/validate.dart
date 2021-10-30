@@ -1,5 +1,7 @@
 export 'validate_annotations.dart';
 
+/// Error generated in the process of
+/// validating a class or field
 class ValidaError {
   // TODO: final F fieldId;
 
@@ -40,11 +42,13 @@ class ValidaError {
   }
 }
 
+/// A value of type [T] which was successfully validated
 class Validated<T> {
   const Validated._(this.value);
   final T value;
 }
 
+/// The result of a validation for [T] with fields of type [F]
 abstract class Validation<T, F> {
   Validation(Map<F, List<ValidaError>> errorsMap)
       : errorsMap = Map.unmodifiable(errorsMap),
@@ -74,6 +78,7 @@ abstract class Validation<T, F> {
   }
 }
 
+/// An object that can validate a value of type [T]
 class Validator<T, V extends Validation<T, Object>> {
   final V Function(T) validate;
 

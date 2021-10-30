@@ -1,6 +1,10 @@
 import 'package:collection/collection.dart';
 import 'package:meta/meta.dart';
 
+/// Serialization and deserialization utility type for constant values
+/// 
+/// Useful primarily for code generators which need to access annotation
+/// values in the build process.
 @immutable
 class SerdeType {
   final String _inner;
