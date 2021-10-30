@@ -114,8 +114,7 @@ class ValidaSet<T> extends ValidaField<Set<T>> implements ValidaLength {
   };
 }
 
-class ValidaMap<K, V> extends ValidaField<Map<K, V>>
-    implements ValidaLength {
+class ValidaMap<K, V> extends ValidaField<Map<K, V>> implements ValidaLength {
   @override
   final int? minLength;
   @override
