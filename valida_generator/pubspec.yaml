@@ -1,13 +1,13 @@
 name: valida_generator
 description: Code generator for valida. Create field, params and object validators from code annotations.
-version: 0.0.1
+version: 0.0.2
 homepage: https://github.com/juancastillo0/valida
 
 environment:
-  sdk: ">=2.12.0 <3.0.0"
+  sdk: ">=2.17.0 <3.0.0"
 
 dependencies:
-  analyzer: ^2.0.0
+  analyzer: '>=2.0.0 <5.0.0'
   build: ^2.0.0
   dart_style: ^2.0.0
   glob: ^2.0.0
