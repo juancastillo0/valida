@@ -1,6 +1,5 @@
 import 'package:valida/serde_type.dart';
 import 'package:valida/validate/validate.dart';
-import 'package:valida/validate/validate_annotations.dart';
 
 /// Different IP versions
 enum IPVersion {
@@ -20,28 +19,56 @@ enum UUIDVersion {
 enum ISBNVersion { v10, v13 }
 
 /// Specification of the validation that should be
-/// executed over a given string
+/// executed over a given String
 class ValidaString extends ValidaField<String> implements ValidaLength {
+  /// Should be within this array
   final List<String>? isIn; // enum
 
   @override
   final int? minLength;
   @override
   final int? maxLength;
+
+  /// Should be a phone number
   final bool? isPhone;
+
+  /// Should be an email
   final bool? isEmail;
+
+  /// Should be a date
   final bool? isDate;
+
+  /// Should be a time
   final bool? isTime;
+
+  /// Should be a "true" or "false"
   final bool? isBool;
+
+  /// Should be numeric
   final bool? isNum;
+
+  /// Should be an url
   final bool? isUrl;
+
+  /// Should be an uuid
   final UUIDVersion? isUUID;
+
+  /// Should be a currency
   final bool? isCurrency;
+
+  /// Should be json parsable
   final bool? isJSON;
 
+  /// Should match the regular expression
   final String? matches;
+
+  /// Should contain the String
   final String? contains;
+
+  /// Should be a letter
   final bool? isAlpha;
+
+  /// Should be a letter or a number
   final bool? isAlphanumeric;
 
   // isVariableWidth, isHalfWidth, isFullWidth, isSurrogatePair,
@@ -72,6 +99,8 @@ class ValidaString extends ValidaField<String> implements ValidaLength {
   @override
   final String? customValidateName;
 
+  /// Specification of the validation that should be
+  /// executed over a given string
   const ValidaString({
     this.isIn,
     this.maxLength,

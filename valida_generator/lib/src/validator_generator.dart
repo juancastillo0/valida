@@ -1,3 +1,5 @@
+// ignore_for_file: require_trailing_commas
+
 import 'dart:async';
 
 import 'package:analyzer/dart/constant/value.dart';
@@ -8,9 +10,9 @@ import 'package:analyzer/dart/element/visitor.dart';
 // ignore: implementation_imports
 import 'package:analyzer/src/dart/element/element.dart';
 import 'package:build/build.dart';
+import 'package:source_gen/source_gen.dart';
 import 'package:valida/serde_type.dart';
 import 'package:valida/valida.dart';
-import 'package:source_gen/source_gen.dart';
 
 class ValidatorGenerator extends GeneratorForAnnotation<Valida> {
   @override
@@ -344,7 +346,9 @@ extension ConsumeSerdeType on DartObject {
         }
         return result;
       },
-      unionType: (union) {},
+      unionType: (union) {
+        return null;
+      },
       late: (l) {
         return this.serde(l.func());
       },

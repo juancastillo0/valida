@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:valida/serde_type.dart';
 import 'package:meta/meta.dart';
+import 'package:valida/serde_type.dart';
 
 /// A value in a comparison
 ///
@@ -23,14 +23,21 @@ abstract class CompVal<T extends Comparable<T>> {
     );
   }
 
+  /// The [value] will be used to compare
   // ignore: sort_unnamed_constructors_first
   const factory CompVal(T value) = CompValueSingle<T>;
+
+  /// The [ref] is the name of the field whose value will be compared
   const factory CompVal.ref(
     String ref,
   ) = CompValueRef<T>;
+
+  /// A single value will be compared. Same as `CompVal(value)`.
   const factory CompVal.single(
     T value,
   ) = CompValueSingle<T>;
+
+  /// A list of values will be compared
   const factory CompVal.list(
     List<CompVal<T>> values,
   ) = CompValueList<T>;
@@ -105,6 +112,7 @@ abstract class CompVal<T extends Comparable<T>> {
   bool get isSingle => this is CompValueSingle;
   bool get isList => this is CompValueList;
 
+  /// The type of CompValue that this is
   TypeCompVal get variantType;
 
   static CompVal<T> fromJson<T extends Comparable<T>>(Object? _map) {
@@ -131,9 +139,13 @@ abstract class CompVal<T extends Comparable<T>> {
     }
   }
 
+  /// Returns a Map with JSON representation
   Map<String, Object?> toJson();
 }
 
+/// A type of CompVal.
+/// Possible values [TypeCompVal.ref], [TypeCompVal.single]
+/// and [TypeCompVal.list].
 @immutable
 class TypeCompVal {
   final String _inner;
@@ -231,6 +243,7 @@ class CompValueRef<T extends Comparable<T>> extends CompVal<T> {
   ) : super._();
 
   @override
+  // ignore: avoid_field_initializers_in_const_classes
   final TypeCompVal variantType = TypeCompVal.ref;
 
   static CompValueRef<T> fromJson<T extends Comparable<T>>(Object? _map) {
@@ -274,6 +287,7 @@ class CompValueSingle<T extends Comparable<T>> extends CompVal<T> {
   ) : super._();
 
   @override
+  // ignore: avoid_field_initializers_in_const_classes
   final TypeCompVal variantType = TypeCompVal.single;
 
   @override
@@ -317,6 +331,7 @@ class CompValueList<T extends Comparable<T>> extends CompVal<T> {
   ) : super._();
 
   @override
+  // ignore: avoid_field_initializers_in_const_classes
   final TypeCompVal variantType = TypeCompVal.list;
 
   @override

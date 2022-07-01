@@ -5,13 +5,26 @@ export 'validate_annotations.dart';
 class ValidaError {
   // TODO: final F fieldId;
 
+  /// The name of the field that caused this error
   final String property;
+
+  /// The value that caused this error
   final Object? value;
+
+  /// An identifier for the type this error
   final String errorCode;
+
+  /// The argument passed as configuration to the validation condition
   final Object? validationParam;
+
+  /// An human readable explanation of this error
   final String message;
+
+  /// The result of validating nested fields if the [value] is a class
   final Validation? nestedValidation;
 
+  /// Error generated in the process of
+  /// validating a class or field
   const ValidaError({
     required this.property,
     required this.value,
@@ -27,6 +40,7 @@ class ValidaError {
         ' $message. $property${value == null ? '' : ' = $value'}';
   }
 
+  /// Converts a [validation] into a [ValidaError] if there are errors
   static ValidaError? fromNested(String property, Validation validation) {
     return validation.hasErrors
         ? ValidaError(

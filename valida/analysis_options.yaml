@@ -11,6 +11,7 @@ linter:
     prefer_interpolation_to_compose_strings: false
     prefer_if_elements_to_conditional_expressions: false
     unnecessary_brace_in_string_interps: false
+    public_member_api_docs: true
 
     type_annotate_public_apis: true
     avoid_redundant_argument_values: false

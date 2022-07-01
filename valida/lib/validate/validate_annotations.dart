@@ -1,8 +1,5 @@
 import 'package:valida/serde_type.dart';
 import 'package:valida/validate/validate.dart';
-import 'package:valida/validate/validate_collections.dart';
-import 'package:valida/validate/validate_string.dart';
-import 'models/comp_val.dart';
 
 export 'models/comp_val.dart';
 export 'validate_collections.dart';
@@ -16,8 +13,13 @@ export 'validate_string.dart';
 /// if [constErrors] is true, the errors will be constant values
 /// if [enumFields] is true, the field type will be enums
 class Valida implements ValidaCustom<Object?> {
+  /// If true, the error lists for each
   final bool nullableErrorLists;
+
+  /// If true, the errors will be constant values
   final bool constErrors;
+
+  /// If true, the field type will be enums
   final bool enumFields;
 
   @override
@@ -25,6 +27,13 @@ class Valida implements ValidaCustom<Object?> {
   @override
   final String? customValidateName;
 
+  /// Specification of the validation that should be
+  /// executed over a given class
+  ///
+  /// if [nullableErrorLists] is true, the error lists for each
+  /// field with be nullable
+  /// if [constErrors] is true, the errors will be constant values
+  /// if [enumFields] is true, the field type will be enums
   const Valida({
     bool? nullableErrorLists,
     bool? constErrors,
@@ -63,6 +72,7 @@ class Valida implements ValidaCustom<Object?> {
 
 /// A function with this annotation will be executed in the validation process
 class ValidaFunction {
+  /// A function with this annotation will be executed in the validation process
   const ValidaFunction();
 }
 
@@ -95,17 +105,20 @@ abstract class ValidaCustom<T> {
 
 /// Interface for validators which are comparable
 abstract class ValidaComparable<T extends Comparable<T>> {
+  /// The comparison validation specification
   ValidaComparison<T>? get comp;
 }
 
 /// The comparison for validators which are comparable
 class ValidaComparison<T extends Comparable<T>> {
+  /// Whether to use [Comparable.compare] or `<` and `>`.
   final bool useCompareTo;
   final CompVal<T>? more;
   final CompVal<T>? less;
   final CompVal<T>? moreEq;
   final CompVal<T>? lessEq;
 
+  /// The comparison for validators which are comparable
   const ValidaComparison({
     this.more,
     this.less,
@@ -143,47 +156,18 @@ class ValidaComparison<T extends Comparable<T>> {
   }
 }
 
-// abstract class CompVal<T extends Comparable> {
-//   const CompVal._();
-
-//   const factory CompVal(T value) = CompValSingle;
-//   const factory CompVal.ref(String ref) = CompValRef;
-//   const factory CompVal.single(T value) = CompValSingle;
-//   const factory CompVal.many(List<CompVal<T>> value) = CompValMany;
-
-//   static const fieldsSerde = SerdeType.late(_makeFieldsSerde);
-//   static SerdeType _makeFieldsSerde() {
-//     return SerdeType.union(
-//       'discriminator',
-//       {},
-//     );
-//   }
-// }
-
-// class CompValRef<T extends Comparable> extends CompVal<T> {
-//   final String ref;
-
-//   const CompValRef(this.ref) : super._();
-// }
-
-// class CompValSingle<T extends Comparable> extends CompVal<T> {
-//   final T value;
-
-//   const CompValSingle(this.value) : super._();
-// }
-
-// class CompValMany<T extends Comparable> extends CompVal<T> {
-//   final List<CompVal<T>> values;
-
-//   const CompValMany(this.values) : super._();
-// }
-
 /// Interface for validators which are fields of a class
 abstract class ValidaField<T> implements ValidaCustom<T> {
+  /// Interface for validators which are fields of a class
   const ValidaField();
 
+  /// Returns a [Map] with a JSON representation of
+  /// this validation specification
   Map<String, Object?> toJson();
 
+  /// The type of value that this field validation specification validations.
+  ///
+  /// Used for code generation
   ValidaFieldType get variantType;
 
   static const variantTypeString = 'variantType';
@@ -256,7 +240,7 @@ abstract class ValidaField<T> implements ValidaCustom<T> {
 }
 
 /// Specification of the validation that should be
-/// executed over a given number
+/// executed over a given [num]
 class ValidaNum extends ValidaField<num> implements ValidaComparable<num> {
   final List<num>? isIn; // enum
   final num? min;
@@ -274,6 +258,8 @@ class ValidaNum extends ValidaField<num> implements ValidaComparable<num> {
   @override
   final String? customValidateName;
 
+  /// Specification of the validation that should be
+  /// executed over a given [num]
   const ValidaNum({
     this.isIn,
     this.min,
@@ -325,7 +311,7 @@ class ValidaNum extends ValidaField<num> implements ValidaComparable<num> {
 }
 
 /// Specification of the validation that should be
-/// executed over a given Duration
+/// executed over a given [Duration]
 class ValidaDuration extends ValidaField<Duration>
     implements ValidaComparable<Duration> {
   final Duration? min;
@@ -342,6 +328,8 @@ class ValidaDuration extends ValidaField<Duration>
   @override
   final ValidaComparison<Duration>? comp;
 
+  /// Specification of the validation that should be
+  /// executed over a given [Duration]
   const ValidaDuration({
     this.min,
     this.max,
@@ -385,7 +373,7 @@ class ValidaDuration extends ValidaField<Duration>
 }
 
 /// Specification of the validation that should be
-/// executed over a given Date
+/// executed over a given [DateTime]
 class ValidaDate extends ValidaField<DateTime>
     implements ValidaComparable<String> {
   final String? min;
@@ -402,6 +390,8 @@ class ValidaDate extends ValidaField<DateTime>
   @override
   final ValidaComparison<String>? comp;
 
+  /// Specification of the validation that should be
+  /// executed over a given [DateTime]
   const ValidaDate({
     this.min,
     this.max,

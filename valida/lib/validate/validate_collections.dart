@@ -1,6 +1,5 @@
 import 'package:valida/serde_type.dart';
 import 'package:valida/validate/validate.dart';
-import 'package:valida/validate/validate_annotations.dart';
 
 /// Specification of the validation that should be
 /// executed over a given value which has length
@@ -138,6 +137,8 @@ class ValidaMap<K, V> extends ValidaField<Map<K, V>> implements ValidaLength {
   @override
   final String? customValidateName;
 
+  /// Specification of the validation that should be
+  /// executed over a given Map
   const ValidaMap({
     this.minLength,
     this.maxLength,
