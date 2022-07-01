@@ -1,3 +1,6 @@
+[![valida pub package](https://img.shields.io/pub/v/valida.svg)](https://pub.dartlang.org/packages/valida)
+[![valida_generator pub package](https://img.shields.io/pub/v/valida_generator.svg)](https://pub.dartlang.org/packages/valida_generator)
+
 # valida
 
 Validators for Dart and Flutter. Create field, params and object validators from code annotations.
