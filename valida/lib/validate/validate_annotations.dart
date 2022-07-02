@@ -89,8 +89,7 @@ enum ValidaFieldType {
 
 ValidaFieldType parseValidaFieldType(String raw) {
   for (final v in ValidaFieldType.values) {
-    final str = v.toString();
-    if (str == raw || str.split('.')[1] == raw) {
+    if (v.name == raw || v.toString() == raw) {
       return v;
     }
   }
@@ -99,7 +98,12 @@ ValidaFieldType parseValidaFieldType(String raw) {
 
 /// Interface for validators which accept a custom function
 abstract class ValidaCustom<T> {
+  /// The function used to perform an additional custom validation
   List<ValidaError> Function(T)? get customValidate;
+
+  /// The name of the function used for validation.
+  /// This value should not be used directly,
+  /// since it is used for code generation
   String? get customValidateName;
 }
 
@@ -145,6 +149,77 @@ class ValidaComparison<T extends Comparable<T>> {
     'useCompareTo': SerdeType.bool,
   });
 
+  /// Performs the comparison validation for [property] in the object
+  /// whose fields can be accessed with [getter] using [_compare]
+  Iterable<ValidaError> validate(
+    String property,
+    int Function(T) _compare,
+    T Function(String) getter,
+  ) sync* {
+    final value = getter(property);
+    int? _compareCompVal(CompVal<T> compVal) {
+      return compVal.when(
+        // TODO: handle nullable getter(ref)
+        ref: (ref) => _compare(getter(ref)),
+        single: _compare,
+        list: (list) {
+          bool less = false;
+          bool more = false;
+          bool eq = false;
+          bool unknown = false;
+          final skipped = list.map(_compareCompVal).any((element) {
+            if (element != null) {
+              less = less || element < 0;
+              more = more || element > 0;
+              eq = eq || element == 0;
+            } else {
+              unknown = true;
+            }
+            return unknown || (less && more || less && eq || more && eq);
+          });
+          if (skipped) return null;
+          if (eq) return 0;
+          if (less) return -1;
+          if (more) return 1;
+          return null;
+        },
+      );
+    }
+
+    if (less != null && (_compareCompVal(less!) ?? 1) > 0) {
+      yield ValidaError(
+        property: property,
+        value: value,
+        errorCode: 'ValidaComparison.less',
+        message: 'Should be less than ${less}',
+      );
+    }
+    if (lessEq != null && (_compareCompVal(lessEq!) ?? 1) >= 0) {
+      yield ValidaError(
+        property: property,
+        value: value,
+        errorCode: 'ValidaComparison.lessEq',
+        message: 'Should be less than or equal to ${lessEq}',
+      );
+    }
+    if (more != null && (_compareCompVal(more!) ?? -1) < 0) {
+      yield ValidaError(
+        property: property,
+        value: value,
+        errorCode: 'ValidaComparison.more',
+        message: 'Should be more than ${more}',
+      );
+    }
+    if (moreEq != null && (_compareCompVal(moreEq!) ?? -1) <= 0) {
+      yield ValidaError(
+        property: property,
+        value: value,
+        errorCode: 'ValidaComparison.moreEq',
+        message: 'Should be more than or equal to ${moreEq}',
+      );
+    }
+  }
+
   Map<String, Object?> toJson() {
     return {
       'more': more?.toJson(),
@@ -174,6 +249,30 @@ abstract class ValidaField<T> implements ValidaCustom<T> {
   /// Returns a [Map] with a JSON representation of
   /// this validation specification
   Map<String, Object?> toJson();
+
+  /// Executes validation of [property] for the object whose fields can
+  /// be accessed with [getter].
+  List<ValidaError> validate(
+    String property,
+    Object? Function(String property) getter,
+  );
+
+  /// Executes validation of [value] with [name]
+  /// for the object whose fields can be accessed with [getter].
+  List<ValidaError> validateValue(
+    T value, {
+    required String name,
+    Object? Function(String property)? getter,
+  }) {
+    return validate(
+      name,
+      (p) {
+        if (p == name) return value;
+        if (getter == null) throw Exception();
+        return getter(p);
+      },
+    );
+  }
 
   /// The type of value that this field validation specification validations.
   ///
@@ -328,6 +427,75 @@ class ValidaNum extends ValidaField<num> implements ValidaComparable<num> {
           : ValidaComparison.fromJson(map['comp']! as Map<String, Object?>),
     );
   }
+
+  @override
+  List<ValidaError> validate(
+    String property,
+    Object? Function(String property) getter,
+  ) {
+    final List<ValidaError> errors = [];
+    final value = getter(property) as num?;
+    if (value == null) return errors;
+
+    final _addError = addErrorFunc(property, value, errors);
+
+    if (isIn != null && !isIn!.contains(value)) {
+      _addError(
+        errorCode: 'ValidaNum.isIn',
+        message: 'Should be any of $isIn',
+        validationParam: isIn,
+      );
+    }
+    if (isInt == true && value.round() != value) {
+      _addError(
+        errorCode: 'ValidaNum.isInt',
+        message: 'Should be an integer',
+        validationParam: null,
+      );
+    }
+    final _comp = comp;
+    if (_comp != null) {
+      int _compare(num single) {
+        return _comp.useCompareTo
+            ? value.compareTo(single)
+            : (value < single
+                ? -1
+                : value == single
+                    ? 0
+                    : 1);
+      }
+
+      errors.addAll(
+        _comp.validate(property, _compare, (p) => getter(p)! as num),
+      );
+    }
+    if (min != null && value < min!) {
+      _addError(
+        errorCode: 'ValidaNum.min',
+        message: 'Should be at a minimum ${min}',
+        validationParam: min,
+      );
+    }
+    if (max != null && value > max!) {
+      _addError(
+        errorCode: 'ValidaNum.max',
+        message: 'Should be at a maximum ${max}',
+        validationParam: max,
+      );
+    }
+    if (isDivisibleBy != null && value.remainder(isDivisibleBy!) == 0) {
+      _addError(
+        errorCode: 'ValidaNum.isDivisibleBy',
+        message: 'Should be divisible by ${isDivisibleBy}',
+        validationParam: isDivisibleBy,
+      );
+    }
+    if (customValidate != null) {
+      errors.addAll(customValidate!(value));
+    }
+
+    return errors;
+  }
 }
 
 /// Specification of the validation that should be
@@ -390,6 +558,54 @@ class ValidaDuration extends ValidaField<Duration>
           : ValidaComparison.fromJson(map['comp']! as Map<String, Object?>),
     );
   }
+
+  @override
+  List<ValidaError> validate(
+    String property,
+    Object? Function(String property) getter,
+  ) {
+    final List<ValidaError> errors = [];
+    final value = getter(property) as Duration?;
+    if (value == null) return errors;
+
+    final _addError = addErrorFunc(property, value, errors);
+
+    final _comp = comp;
+    if (_comp != null) {
+      int _compare(Duration single) {
+        return _comp.useCompareTo
+            ? value.compareTo(single)
+            : (value < single
+                ? -1
+                : value == single
+                    ? 0
+                    : 1);
+      }
+
+      errors.addAll(
+        _comp.validate(property, _compare, (p) => getter(p)! as Duration),
+      );
+    }
+    if (min != null && value < min!) {
+      _addError(
+        errorCode: 'ValidaDuration.min',
+        message: 'Should be at a minimum ${min}',
+        validationParam: min,
+      );
+    }
+    if (max != null && value > max!) {
+      _addError(
+        errorCode: 'ValidaDuration.max',
+        message: 'Should be at a maximum ${max}',
+        validationParam: max,
+      );
+    }
+    if (customValidate != null) {
+      errors.addAll(customValidate!(value));
+    }
+
+    return errors;
+  }
 }
 
 /// Specification of the validation that should be
@@ -451,4 +667,92 @@ class ValidaDate extends ValidaField<DateTime>
           : ValidaComparison.fromJson(map['comp']! as Map<String, Object?>),
     );
   }
+
+  /// Parses a Date using [DateTime.parse] and custom predefined Strings.
+  /// Such as "now" for `DateTime.now()`
+  static DateTime parseDate(String value) {
+    return value == 'now' ? DateTime.now() : DateTime.parse(value);
+  }
+
+  @override
+  List<ValidaError> validate(
+    String property,
+    Object? Function(String property) getter,
+  ) {
+    final List<ValidaError> errors = [];
+    final value = getter(property) as DateTime?;
+    if (value == null) return errors;
+
+    final _addError = addErrorFunc(property, value, errors);
+
+    final _comp = comp;
+    if (_comp != null) {
+      int _compare(String _single) {
+        final single = ValidaDate.parseDate(_single);
+        return _comp.useCompareTo
+            ? value.compareTo(single)
+            : (value.isBefore(single)
+                ? -1
+                : value.isAtSameMomentAs(single)
+                    ? 0
+                    : 1);
+      }
+
+      errors.addAll(
+        _comp.validate(property, _compare, (p) {
+          final v = getter(p);
+          return v is String ? v : (v! as DateTime).toString();
+        }),
+      );
+    }
+    if (min != null && value.isBefore(ValidaDate.parseDate(min!))) {
+      _addError(
+        errorCode: 'ValidaDate.min',
+        message: 'Should be at a minimum ${min}',
+        validationParam: min,
+      );
+    }
+    if (max != null && value.isAfter(ValidaDate.parseDate(max!))) {
+      _addError(
+        errorCode: 'ValidaDate.max',
+        message: 'Should be at a maximum ${max}',
+        validationParam: max,
+      );
+    }
+    if (customValidate != null) {
+      errors.addAll(customValidate!(value));
+    }
+
+    return errors;
+  }
+}
+
+// TODO: make private
+
+void Function({
+  required String errorCode,
+  required String message,
+  required Object? validationParam,
+}) addErrorFunc(
+  String property,
+  Object value,
+  List<ValidaError> errors,
+) {
+  void _addError({
+    required String errorCode,
+    required String message,
+    required Object? validationParam,
+  }) {
+    errors.add(
+      ValidaError(
+        property: property,
+        value: value,
+        errorCode: errorCode,
+        message: message,
+        validationParam: validationParam,
+      ),
+    );
+  }
+
+  return _addError;
 }

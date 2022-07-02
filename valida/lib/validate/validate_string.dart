@@ -1,5 +1,6 @@
 import 'package:valida/serde_type.dart';
 import 'package:valida/validate/validate.dart';
+import 'package:validators/validators.dart' as validators;
 
 /// Different IP versions
 enum IPVersion {
@@ -20,9 +21,9 @@ enum ISBNVersion { v10, v13 }
 
 /// Specification of the validation that should be
 /// executed over a given String
-class ValidaString extends ValidaField<String> implements ValidaLength {
+class ValidaString extends ValidaField<String> with ValidaLength {
   /// Should be within this array
-  final List<String>? isIn; // enum
+  final List<String>? isIn;
 
   @override
   final int? minLength;
@@ -284,6 +285,247 @@ class ValidaString extends ValidaField<String> implements ValidaLength {
     'isISBN': SerdeType.enumV(ISBNVersion.values),
     'isIP': SerdeType.enumV(IPVersion.values),
   };
+
+  @override
+  List<ValidaError> validate(
+    String property,
+    Object? Function(String property) getter,
+  ) {
+    final List<ValidaError> errors = [];
+    final value = getter(property) as String?;
+    if (value == null) return errors;
+
+    final _addError = addErrorFunc(property, value, errors);
+
+    if (isIn != null && !isIn!.contains(value)) {
+      _addError(
+        errorCode: 'ValidaString.isIn',
+        message: 'Should is be in $isIn',
+        validationParam: isIn,
+      );
+    }
+    errors.addAll(validateLength(property, value, value.length));
+
+    // TODO:
+    // if (isPhone == true && !validators.isPhone(value)) {
+    //   _addError(
+    //     errorCode: 'ValidaString.isPhone',
+    //     message: 'Should be a phone number',
+    //     validationParam: null,
+    //   );
+    // }
+    if (isEmail == true && !validators.isEmail(value)) {
+      _addError(
+        errorCode: 'ValidaString.isEmail',
+        message: 'Should be an email',
+        validationParam: null,
+      );
+    }
+    if (isDate == true && !validators.isDate(value)) {
+      _addError(
+        errorCode: 'ValidaString.isDate',
+        message: 'Should be a date',
+        validationParam: null,
+      );
+    }
+    // TODO:
+    // if (isTime == true && !validators.isTime(value)) {
+    //   _addError(
+    //     errorCode: 'ValidaString.isTime',
+    //     message: 'Should be a time',
+    //     validationParam: null,
+    //   );
+    // }
+    if (isBool == true && (value != 'true' && value != 'false')) {
+      _addError(
+        errorCode: 'ValidaString.isBool',
+        message: 'Should be "true" or "false"',
+        validationParam: null,
+      );
+    }
+    if (isNum == true && !validators.isNumeric(value)) {
+      _addError(
+        errorCode: 'ValidaString.isNum',
+        message: 'Should be numeric',
+        validationParam: null,
+      );
+    }
+    if (isUrl == true && !validators.isURL(value)) {
+      _addError(
+        errorCode: 'ValidaString.isUrl',
+        message: 'Should be an url',
+        validationParam: null,
+      );
+    }
+    if (isUUID != null &&
+        !validators.isUUID(value, isUUID!.name.replaceFirst('v', ''))) {
+      _addError(
+        errorCode: 'ValidaString.isUUID',
+        message: 'Should be an UUID (${isUUID!.name})',
+        validationParam: isUUID,
+      );
+    }
+    // TODO:
+    // if (isCurrency == true && !validators.isCurrency(value)) {
+    //   _addError(
+    //     errorCode: 'ValidaString.isCurrency',
+    //     message: 'Should be a currency',
+    //     validationParam: null,
+    //   );
+    // }
+    if (isJSON == true && !validators.isJSON(value)) {
+      _addError(
+        errorCode: 'ValidaString.isJSON',
+        message: 'Should be a JSON String',
+        validationParam: null,
+      );
+    }
+    if (matches != null && !validators.matches(value, matches)) {
+      _addError(
+        errorCode: 'ValidaString.matches',
+        message: 'Should match "$matches"',
+        validationParam: matches,
+      );
+    }
+    if (contains != null && !validators.contains(value, contains)) {
+      _addError(
+        errorCode: 'ValidaString.contains',
+        message: 'Should contain "$contains"',
+        validationParam: contains,
+      );
+    }
+    if (isAlpha == true && !validators.isAlpha(value)) {
+      _addError(
+        errorCode: 'ValidaString.isAlpha',
+        message: 'Should contain only letters',
+        validationParam: null,
+      );
+    }
+    if (isAlphanumeric == true && !validators.isAlphanumeric(value)) {
+      _addError(
+        errorCode: 'ValidaString.isAlphanumeric',
+        message: 'Should be alphanumeric',
+        validationParam: null,
+      );
+    }
+    if (isLowercase == true && !validators.isLowercase(value)) {
+      _addError(
+        errorCode: 'ValidaString.isLowercase',
+        message: 'Should be lowercase',
+        validationParam: null,
+      );
+    }
+    if (isUppercase == true && !validators.isUppercase(value)) {
+      _addError(
+        errorCode: 'ValidaString.isUppercase',
+        message: 'Should be uppercase',
+        validationParam: null,
+      );
+    }
+    if (isAscii == true && !validators.isAscii(value)) {
+      _addError(
+        errorCode: 'ValidaString.isAscii',
+        message: 'Should be ascii',
+        validationParam: null,
+      );
+    }
+    if (isBase64 == true && !validators.isBase64(value)) {
+      _addError(
+        errorCode: 'ValidaString.isBase64',
+        message: 'Should be base64 encoded',
+        validationParam: null,
+      );
+    }
+    if (isCreditCard == true && !validators.isCreditCard(value)) {
+      _addError(
+        errorCode: 'ValidaString.isCreditCard',
+        message: 'Should be a credit card',
+        validationParam: null,
+      );
+    }
+    if (isFQDN == true && !validators.isFQDN(value)) {
+      _addError(
+        errorCode: 'ValidaString.isFQDN',
+        message: 'Should be a FQDN',
+        validationParam: null,
+      );
+    }
+    if (isHexadecimal == true && !validators.isHexadecimal(value)) {
+      _addError(
+        errorCode: 'ValidaString.isHexadecimal',
+        message: 'Should be hexadecimal',
+        validationParam: null,
+      );
+    }
+    if (isHexColor == true && !validators.isHexColor(value)) {
+      _addError(
+        errorCode: 'ValidaString.isHexColor',
+        message: 'Should be a hex color',
+        validationParam: null,
+      );
+    }
+    if (isDivisibleBy != null &&
+        !validators.isDivisibleBy(value, isDivisibleBy)) {
+      _addError(
+        errorCode: 'ValidaString.isDivisibleBy',
+        message: 'Should be divisible by $isDivisibleBy',
+        validationParam: isDivisibleBy,
+      );
+    }
+    if (surrogatePairsLengthMin != null &&
+        !validators.isLength(value, surrogatePairsLengthMin!)) {
+      _addError(
+        errorCode: 'ValidaString.surrogatePairsLengthMin',
+        message:
+            'Should have at a minimum $surrogatePairsLengthMin surrogate pairs',
+        validationParam: surrogatePairsLengthMin,
+      );
+    }
+    if (surrogatePairsLengthMax != null &&
+        !validators.isLength(value, 0, surrogatePairsLengthMax)) {
+      _addError(
+        errorCode: 'ValidaString.surrogatePairsLengthMax',
+        message:
+            'Should have at a maximum $surrogatePairsLengthMax surrogate pairs',
+        validationParam: surrogatePairsLengthMax,
+      );
+    }
+    if (isInt == true && !validators.isInt(value)) {
+      _addError(
+        errorCode: 'ValidaString.isInt',
+        message: 'Should be an integer',
+        validationParam: null,
+      );
+    }
+    if (isFloat == true && !validators.isFloat(value)) {
+      _addError(
+        errorCode: 'ValidaString.isFloat',
+        message: 'Should be a floating point number',
+        validationParam: null,
+      );
+    }
+    if (isISBN != null &&
+        !validators.isISBN(value, isISBN!.name.replaceFirst('v', ''))) {
+      _addError(
+        errorCode: 'ValidaString.isISBN',
+        message: 'Should be an ISBN (${isISBN!.name})',
+        validationParam: isISBN,
+      );
+    }
+    if (isIP != null &&
+        !validators.isIP(value, isIP!.name.replaceFirst('v', ''))) {
+      _addError(
+        errorCode: 'ValidaString.isIP',
+        message: 'Should be and IP (${isIP!.name})',
+        validationParam: isIP,
+      );
+    }
+    if (customValidate != null) {
+      errors.addAll(customValidate!(value));
+    }
+
+    return errors;
+  }
 }
 
 T? _parseEnum<T>(String? raw, List<T> enumValues) {

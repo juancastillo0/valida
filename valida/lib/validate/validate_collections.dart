@@ -10,11 +10,37 @@ abstract class ValidaLength {
 
   /// The maximum length the value should be
   int? get maxLength;
+
+  /// Returns an iterable with the errors of validating [value] with [length]
+  Iterable<ValidaError> validateLength(
+    String property,
+    Object value,
+    int length,
+  ) sync* {
+    if (minLength != null && length < minLength!) {
+      yield ValidaError(
+        property: property,
+        value: value,
+        errorCode: 'ValidaLength.minLength',
+        message: 'Should have a minimum length of ${minLength}',
+        validationParam: minLength,
+      );
+    }
+    if (maxLength != null && length > maxLength!) {
+      yield ValidaError(
+        property: property,
+        value: value,
+        errorCode: 'ValidaLength.maxLength',
+        message: 'Should have a maximum length of ${maxLength}',
+        validationParam: maxLength,
+      );
+    }
+  }
 }
 
 /// Specification of the validation that should be
 /// executed over a given [List]
-class ValidaList<T> extends ValidaField<List<T>> implements ValidaLength {
+class ValidaList<T> extends ValidaField<List<T>> with ValidaLength {
   @override
   final int? minLength;
   @override
@@ -69,11 +95,40 @@ class ValidaList<T> extends ValidaField<List<T>> implements ValidaLength {
     'each': ValidaField.fieldsSerde,
     'customValidate': SerdeType.function,
   };
+
+  @override
+  List<ValidaError> validate(
+    String property,
+    Object? Function(String property) getter,
+  ) {
+    final List<ValidaError> errors = [];
+    final value = getter(property) as List<T>?;
+    if (value == null) return errors;
+
+    errors.addAll(validateLength(property, value, value.length));
+    if (each != null) {
+      int i = 0;
+      errors.addAll(
+        value.expand(
+          (e) => each!.validateValue(
+            e,
+            name: '$property[${i++}]',
+            getter: getter,
+          ),
+        ),
+      );
+    }
+    if (customValidate != null) {
+      errors.addAll(customValidate!(value));
+    }
+
+    return errors;
+  }
 }
 
 /// Specification of the validation that should be
 /// executed over a given [Set]
-class ValidaSet<T> extends ValidaField<Set<T>> implements ValidaLength {
+class ValidaSet<T> extends ValidaField<Set<T>> with ValidaLength {
   @override
   final int? minLength;
   @override
@@ -129,11 +184,40 @@ class ValidaSet<T> extends ValidaField<Set<T>> implements ValidaLength {
     'each': ValidaField.fieldsSerde,
     'customValidate': SerdeType.function,
   };
+
+  @override
+  List<ValidaError> validate(
+    String property,
+    Object? Function(String property) getter,
+  ) {
+    final List<ValidaError> errors = [];
+    final value = getter(property) as Set<T>?;
+    if (value == null) return errors;
+
+    errors.addAll(validateLength(property, value, value.length));
+    if (each != null) {
+      int i = 0;
+      errors.addAll(
+        value.expand(
+          (e) => each!.validateValue(
+            e,
+            name: '$property[${i++}]',
+            getter: getter,
+          ),
+        ),
+      );
+    }
+    if (customValidate != null) {
+      errors.addAll(customValidate!(value));
+    }
+
+    return errors;
+  }
 }
 
 /// Specification of the validation that should be
 /// executed over a given [Map]
-class ValidaMap<K, V> extends ValidaField<Map<K, V>> implements ValidaLength {
+class ValidaMap<K, V> extends ValidaField<Map<K, V>> with ValidaLength {
   @override
   final int? minLength;
   @override
@@ -199,4 +283,43 @@ class ValidaMap<K, V> extends ValidaField<Map<K, V>> implements ValidaLength {
     'eachValue': ValidaField.fieldsSerde,
     'customValidate': SerdeType.function,
   };
+
+  @override
+  List<ValidaError> validate(
+    String property,
+    Object? Function(String property) getter,
+  ) {
+    final List<ValidaError> errors = [];
+    final value = getter(property) as Map<K, V>?;
+    if (value == null) return errors;
+
+    errors.addAll(validateLength(property, value, value.length));
+    if (eachKey != null) {
+      errors.addAll(
+        value.keys.expand(
+          (key) => eachKey!.validateValue(
+            key,
+            name: '$property[${key}].key',
+            getter: getter,
+          ),
+        ),
+      );
+    }
+    if (eachValue != null) {
+      errors.addAll(
+        value.entries.expand(
+          (e) => eachValue!.validateValue(
+            e.value,
+            name: '$property[${e.key}].value',
+            getter: getter,
+          ),
+        ),
+      );
+    }
+    if (customValidate != null) {
+      errors.addAll(customValidate!(value));
+    }
+
+    return errors;
+  }
 }
