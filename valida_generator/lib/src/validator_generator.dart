@@ -22,19 +22,32 @@ class ValidatorGenerator extends GeneratorForAnnotation<Valida> {
     BuildStep buildStep,
   ) {
     try {
-      final visitor = ModelVisitor();
-      element.visitChildren(visitor);
-      final _visited = <Element>{element};
-      ClassElement? elem = element is ClassElement ? element : null;
-      while (elem?.supertype != null) {
-        final currelem = elem!.supertype!.element;
-        if (_visited.contains(currelem)) {
-          elem = null;
-          continue;
+      final ModelVisitor visitor;
+      if (element is FunctionElement) {
+        final funcVisitor = FunctionVisitor();
+        element.visitChildren(funcVisitor);
+        visitor = funcVisitor.modelVisitor;
+
+        final firstIndex = element.name.replaceFirstMapped(
+            RegExp('[a-zA-Z0-9]'),
+            (match) =>
+                match.input.substring(match.start, match.end).toUpperCase());
+        visitor.className = '${firstIndex}Args';
+      } else {
+        visitor = ModelVisitor();
+        element.visitChildren(visitor);
+        final _visited = <Element>{element};
+        ClassElement? elem = element is ClassElement ? element : null;
+        while (elem?.supertype != null) {
+          final currelem = elem!.supertype!.element;
+          if (_visited.contains(currelem)) {
+            elem = null;
+            continue;
+          }
+          _visited.add(currelem);
+          currelem.visitChildren(visitor);
+          elem = currelem;
         }
-        _visited.add(currelem);
-        currelem.visitChildren(visitor);
-        elem = currelem;
       }
 
       final annotationValue = annotation.objectValue.extractValue(
@@ -49,7 +62,7 @@ class ValidatorGenerator extends GeneratorForAnnotation<Valida> {
       }
 
       return '''
-
+${element is FunctionElement ? generateArgsClass(className!, element) : ''}
 enum ${className}Field {
   ${visitor.fields.entries.map((e) {
         return '${e.key},';
@@ -83,10 +96,36 @@ class ${className}Validation extends Validation<${className}, ${className}Field>
   final ${className} value;
 
   final ${className}ValidationFields fields;
-  
+
+  static const validationSpec = {
+    ${visitor.fields.entries.map(
+        (e) {
+          final value = e.value;
+          final annot = value.element.element.metadata.firstWhere(
+            (element) => const TypeChecker.fromRuntime(ValidaField)
+                .isAssignableFromType(element.computeConstantValue()!.type!),
+          );
+          return "'${e.key}': ${getSouceCodeAnnotation(buildStep, annot)},";
+        },
+      ).join()}
+  };
+
+  static List<ValidaError> globalValidate($className value) => ${_globalFunctionValidation(visitor.validateFunctions)};
+
+  static Object? getField(${className} value, String field) {
+    switch (field) {
+      ${visitor.fields.entries.map(
+        (e) {
+          return "case '${e.key}': return value.${e.key};";
+        },
+      ).join()}
+      default:
+        throw Exception();
+    }
+  }
 }
 
-${className}Validation validate${className}(${className} value) {
+${className}Validation ${_functionValidateName(className!)}(${className} value) {
   final errors = <${className}Field, List<ValidaError>>{};
 
   ${visitor.fieldsWithValidate.map((e) {
@@ -98,11 +137,7 @@ ${className}Validation validate${className}(${className} value) {
         errors[${className}Field.${e.name}] = [if (_${e.name}Validation != null) _${e.name}Validation];
         ''';
       }).join()}
-  ${visitor.validateFunctions.isEmpty ? '' : 'errors[${className}Field.global] = [${visitor.validateFunctions.map((e) {
-              return e.isStatic
-                  ? '...${e.enclosingElement.name}.${e.name}(value)'
-                  : '...value.${e.name}()';
-            }).join(',')}];'}
+  ${visitor.validateFunctions.isEmpty ? '' : 'errors[${className}Field.global] = ${_globalFunctionValidation(visitor.validateFunctions)};'}
   ${visitor.fields.entries.map((e) {
         final isNullable = e.value.element.type.nullabilitySuffix ==
             NullabilitySuffix.question;
@@ -145,6 +180,103 @@ ${className}Validation validate${className}(${className} value) {
   }
 }
 
+String _globalFunctionValidation(Set<MethodElement> validateFunctions) {
+  return '''
+[${validateFunctions.map((e) {
+    return e.isStatic
+        ? '...${e.enclosingElement.name}.${e.name}(value),'
+        : '...value.${e.name}(),';
+  }).join()}
+]''';
+}
+
+String getSouceCodeAnnotation(BuildStep buildStep, ElementAnnotation e) {
+  final s = e as ElementAnnotationImpl;
+  return s.annotationAst.toString().substring(1);
+}
+
+int _orderForParameter(ParameterElement a) {
+  if (a.isRequiredPositional) return 0;
+  if (a.isOptionalPositional) return 1;
+  if (a.isRequiredNamed) return 2;
+  return 3;
+}
+
+String generateArgsClass(
+  String className,
+  FunctionElement element,
+) {
+  final params = [...element.parameters]
+    ..sort((a, b) => _orderForParameter(a) - _orderForParameter(b));
+
+  int namedArgs = 0;
+  int optionalPositionArgs = 0;
+  return '''
+/// The arguments for [${element.name}].
+class $className {
+  ${params.map((e) {
+    return '${e.documentationComment == null ? '' : '/// ${e.documentationComment}\n'}'
+        'final ${e.type.getDisplayString(withNullability: true)} ${e.name};';
+  }).join()}
+
+  /// The arguments for [${element.name}].
+  const $className(
+    ${params.map((e) {
+    if (e.isNamed) namedArgs++;
+    if (e.isOptionalPositional) optionalPositionArgs++;
+    return '${namedArgs == 1 ? '{' : optionalPositionArgs == 1 ? '[' : ''}'
+        ' ${e.isRequiredNamed ? 'required' : ''} this.${e.name} '
+        ' ${e.defaultValueCode == null ? '' : '= ${e.defaultValueCode}'},';
+  }).join()}
+  ${namedArgs > 0 ? '}' : ''}
+  ${optionalPositionArgs > 0 ? ']' : ''}
+  );
+
+  /// Validates this arguments for [${element.name}].
+  ${className}Validation validate() => ${_functionValidateName(className)}(this);
+
+
+  /// Validates this arguments for [${element.name}] and
+  /// returns the successfully [Validated] value or
+  /// throws a [${className}Validation] when there is an error.
+  Validated<${className}> isValidOrThrow() {
+    final validation = validate();
+    if (validation.hasErrors) {
+      throw validation;
+    }
+    return validation.validated!;
+  }
+
+  /// Returns a Map with all fields
+  Map<String, Object?> toJson() => {
+    ${params.map((e) => "'${e.name}': ${e.name},").join()}
+  };
+
+  @override
+  String toString() => '${className}\${toJson()}';
+
+  @override
+  bool operator ==(dynamic other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is ${className} &&
+            ${params.map((e) => '${e.name} == other.${e.name}').join(' && ')});
+  }
+
+  @override
+  int get hashCode => ${params.length <= 19 ? 'Object.hash(runtimeType,' : 'Object.hashAll([runtimeType,'}
+    ${params.map((e) => e.name).join(',')}
+    ${params.length <= 19 ? ',)' : ',])'};
+}
+''';
+}
+
+String _functionValidateName(String className) {
+  return className.startsWith('_')
+      ? '_validate${className.substring(1)}'
+      : 'validate${className}';
+}
+
 class ValidationItem {
   final String defaultMessage;
   final String condition;
@@ -174,11 +306,26 @@ class ValidationItem {
   }
 }
 
+class FunctionVisitor extends SimpleElementVisitor<void> {
+  final modelVisitor = ModelVisitor();
+
+  @override
+  void visitParameterElement(ParameterElement element) {
+    element.defaultValueCode;
+    modelVisitor.visitFieldOrArgElement(FieldDescription(
+      element: element,
+      type: element.type,
+      name: element.name,
+    ));
+    super.visitParameterElement(element);
+  }
+}
+
 class ModelVisitor extends SimpleElementVisitor<void> {
-  DartType? className;
+  String? className;
   final fields = <String, _Field>{};
   final validateFunctions = <MethodElement>{};
-  final fieldsWithValidate = <FieldElement>{};
+  final fieldsWithValidate = <FieldDescription>{};
 
   static const _listAnnotation = TypeChecker.fromRuntime(ValidaList);
   static const _stringAnnotation = TypeChecker.fromRuntime(ValidaString);
@@ -196,35 +343,44 @@ class ModelVisitor extends SimpleElementVisitor<void> {
 
   @override
   dynamic visitConstructorElement(ConstructorElement element) {
-    className ??= element.returnType;
+    className ??= element.returnType.toString();
     return super.visitConstructorElement(element);
   }
 
   @override
   dynamic visitFieldElement(FieldElement element) {
+    visitFieldOrArgElement(FieldDescription(
+      element: element,
+      type: element.type,
+      name: element.name,
+    ));
+    return super.visitFieldElement(element);
+  }
+
+  dynamic visitFieldOrArgElement(FieldDescription prop) {
     void _addFields({
       required TypeChecker annotation,
       required Map<String, SerdeType> fieldsSerde,
       required ValidaField Function(Map<String, Object?> map) fromJson,
     }) {
-      if (annotation.hasAnnotationOfExact(element)) {
-        final annot = annotation.annotationsOfExact(element).first;
+      if (annotation.hasAnnotationOfExact(prop.element)) {
+        final annot = annotation.annotationsOfExact(prop.element).first;
         final _annot = annot.extractValue(
           fieldsSerde,
           (map) => fromJson(map),
         );
 
-        fields[element.name] = _Field(element, _annot);
+        fields[prop.name] = _Field(prop, _annot);
       }
     }
 
-    final elementType = element.type.element;
+    final elementType = prop.type.element;
     if (elementType != null) {
       final fieldType = const TypeChecker.fromRuntime(Valida)
           .annotationsOfExact(elementType, throwOnUnresolved: false)
           .toList();
       if (fieldType.isNotEmpty) {
-        fieldsWithValidate.add(element);
+        fieldsWithValidate.add(prop);
       }
     }
 
@@ -266,9 +422,19 @@ class ModelVisitor extends SimpleElementVisitor<void> {
       fieldsSerde: ValidaMap.fieldsSerde,
       fromJson: (map) => ValidaMap<Object?, Object?>.fromJson(map),
     );
-
-    return super.visitFieldElement(element);
   }
+}
+
+class FieldDescription {
+  final Element element;
+  final DartType type;
+  final String name;
+
+  const FieldDescription({
+    required this.element,
+    required this.type,
+    required this.name,
+  });
 }
 
 extension ConsumeSerdeType on DartObject {
@@ -373,7 +539,7 @@ extension ConsumeSerdeType on DartObject {
 
 class _Field {
   const _Field(this.element, this.annotation);
-  final FieldElement element;
+  final FieldDescription element;
   final ValidaField annotation;
 }
 
