@@ -109,8 +109,20 @@ class NestedField {
   });
 }
 
-// TODO: generate execution of global validation functions in annotation
-@Valida()
+List<ValidaError> _customValidateSingleFunction(Object? _args) {
+  final args = _args! as SingleFunctionArgs;
+  return [
+    if (args.name == 'none' && args.lastName == 'NONE')
+      ValidaError(
+        property: 'name',
+        value: args.name,
+        errorCode: 'Custom.noNoneName',
+        message: "Can't have a 'none' name and a 'NONE' last name",
+      ),
+  ];
+}
+
+@Valida(customValidate: _customValidateSingleFunction)
 int singleFunction(
   @ValidaString(isLowercase: true, isAlpha: true) String name, [
   @ValidaString(isUppercase: true, isAlpha: true) String lastName = 'NONE',
@@ -128,10 +140,10 @@ int _singleFunction2(
   @ValidaString(isUppercase: true, isAlpha: true) String lastName = 'NONE',
   @ValidaList(minLength: 1) required List nonEmptyList,
 }) {
-  _SingleFunction2Args(
+  final validated = _SingleFunction2Args(
     name,
     lastName: lastName,
     nonEmptyList: nonEmptyList,
-  ).isValidOrThrow();
+  ).validatedOrThrow();
   return name.length + lastName.length + nonEmptyList.length;
 }

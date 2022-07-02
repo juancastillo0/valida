@@ -70,6 +70,7 @@ class FormTestValidation extends Validation<FormTest, FormTestField> {
   static List<ValidaError> globalValidate(FormTest value) => [
         ...FormTest._customValidate2(value),
         ...value._customValidate3(),
+        ...FormTest._customValidate(value),
       ];
 
   static Object? getField(FormTest value, String field) {
@@ -105,6 +106,7 @@ FormTestValidation validateFormTest(FormTest value) {
   errors[FormTestField.global] = [
     ...FormTest._customValidate2(value),
     ...value._customValidate3(),
+    ...FormTest._customValidate(value),
   ];
   errors[FormTestField.longStr] = [
     ..._customValidateStr(value.longStr),
@@ -325,12 +327,13 @@ class SingleFunctionArgs {
   /// Validates this arguments for [singleFunction] and
   /// returns the successfully [Validated] value or
   /// throws a [SingleFunctionArgsValidation] when there is an error.
-  Validated<SingleFunctionArgs> isValidOrThrow() {
+  Validated<SingleFunctionArgs> validatedOrThrow() {
     final validation = validate();
-    if (validation.hasErrors) {
+    final validated = validation.validated;
+    if (validated == null) {
       throw validation;
     }
-    return validation.validated!;
+    return validated;
   }
 
   /// Returns a Map with all fields
@@ -362,6 +365,8 @@ class SingleFunctionArgs {
 enum SingleFunctionArgsField {
   name,
   lastName,
+
+  global,
 }
 
 class SingleFunctionArgsValidationFields {
@@ -389,7 +394,9 @@ class SingleFunctionArgsValidation
     'lastName': ValidaString(isUppercase: true, isAlpha: true),
   };
 
-  static List<ValidaError> globalValidate(SingleFunctionArgs value) => [];
+  static List<ValidaError> globalValidate(SingleFunctionArgs value) => [
+        ..._customValidateSingleFunction(value),
+      ];
 
   static Object? getField(SingleFunctionArgs value, String field) {
     switch (field) {
@@ -407,6 +414,9 @@ SingleFunctionArgsValidation validateSingleFunctionArgs(
     SingleFunctionArgs value) {
   final errors = <SingleFunctionArgsField, List<ValidaError>>{};
 
+  errors[SingleFunctionArgsField.global] = [
+    ..._customValidateSingleFunction(value),
+  ];
   errors[SingleFunctionArgsField.name] = [
     if (value.name.toLowerCase() != value.name)
       ValidaError(
@@ -455,12 +465,13 @@ class _SingleFunction2Args {
   /// Validates this arguments for [_singleFunction2] and
   /// returns the successfully [Validated] value or
   /// throws a [_SingleFunction2ArgsValidation] when there is an error.
-  Validated<_SingleFunction2Args> isValidOrThrow() {
+  Validated<_SingleFunction2Args> validatedOrThrow() {
     final validation = validate();
-    if (validation.hasErrors) {
+    final validated = validation.validated;
+    if (validated == null) {
       throw validation;
     }
-    return validation.validated!;
+    return validated;
   }
 
   /// Returns a Map with all fields

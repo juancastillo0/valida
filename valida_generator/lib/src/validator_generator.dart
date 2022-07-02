@@ -55,6 +55,9 @@ class ValidatorGenerator extends GeneratorForAnnotation<Valida> {
         (p0) => Valida.fromJson(p0),
       );
       final nullableErrorLists = annotationValue.nullableErrorLists;
+      final hasGlobalFunctionValidators =
+          visitor.validateFunctions.isNotEmpty ||
+              annotationValue.customValidateName != null;
       final className = visitor.className;
 
       String _fieldIdent(String fieldName) {
@@ -68,7 +71,7 @@ enum ${className}Field {
         return '${e.key},';
       }).join()}
   ${visitor.fieldsWithValidate.map((e) => '${e.name},').join()}
-  ${visitor.validateFunctions.isNotEmpty ? 'global,' : ''}
+  ${hasGlobalFunctionValidators ? 'global,' : ''}
 }
 
 class ${className}ValidationFields {
@@ -110,7 +113,7 @@ class ${className}Validation extends Validation<${className}, ${className}Field>
       ).join()}
   };
 
-  static List<ValidaError> globalValidate($className value) => ${_globalFunctionValidation(visitor.validateFunctions)};
+  static List<ValidaError> globalValidate($className value) => ${_globalFunctionValidation(annotationValue, visitor.validateFunctions)};
 
   static Object? getField(${className} value, String field) {
     switch (field) {
@@ -137,7 +140,7 @@ ${className}Validation ${_functionValidateName(className!)}(${className} value) 
         errors[${className}Field.${e.name}] = [if (_${e.name}Validation != null) _${e.name}Validation];
         ''';
       }).join()}
-  ${visitor.validateFunctions.isEmpty ? '' : 'errors[${className}Field.global] = ${_globalFunctionValidation(visitor.validateFunctions)};'}
+  ${!hasGlobalFunctionValidators ? '' : 'errors[${className}Field.global] = ${_globalFunctionValidation(annotationValue, visitor.validateFunctions)};'}
   ${visitor.fields.entries.map((e) {
         final isNullable = e.value.element.type.nullabilitySuffix ==
             NullabilitySuffix.question;
@@ -180,13 +183,17 @@ ${className}Validation ${_functionValidateName(className!)}(${className} value) 
   }
 }
 
-String _globalFunctionValidation(Set<MethodElement> validateFunctions) {
+String _globalFunctionValidation(
+  Valida annotationValue,
+  Set<MethodElement> validateFunctions,
+) {
   return '''
 [${validateFunctions.map((e) {
     return e.isStatic
         ? '...${e.enclosingElement.name}.${e.name}(value),'
         : '...value.${e.name}(),';
   }).join()}
+  ${annotationValue.customValidateName == null ? '' : '...${annotationValue.customValidateName}(value),'}
 ]''';
 }
 
@@ -239,12 +246,13 @@ class $className {
   /// Validates this arguments for [${element.name}] and
   /// returns the successfully [Validated] value or
   /// throws a [${className}Validation] when there is an error.
-  Validated<${className}> isValidOrThrow() {
+  Validated<${className}> validatedOrThrow() {
     final validation = validate();
-    if (validation.hasErrors) {
+    final validated = validation.validated;
+    if (validated == null) {
       throw validation;
     }
-    return validation.validated!;
+    return validated;
   }
 
   /// Returns a Map with all fields
@@ -437,6 +445,7 @@ class FieldDescription {
   });
 }
 
+///
 extension ConsumeSerdeType on DartObject {
   T extractValue<T>(
     Map<String, SerdeType> fields,
@@ -543,6 +552,7 @@ class _Field {
   final ValidaField annotation;
 }
 
+///
 extension TemplateValidateField on ValidaField {
   List<ValidationItem> validations({
     required String fieldName,
