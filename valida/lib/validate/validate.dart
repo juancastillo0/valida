@@ -59,15 +59,20 @@ class ValidaError {
 /// A value of type [T] which was successfully validated
 class Validated<T> {
   const Validated._(this.value);
+
+  /// The successfully validated value
   final T value;
 }
 
 /// The result of a validation for [T] with fields of type [F]
 abstract class Validation<T, F> {
+  /// The result of a validation for [T] with fields of type [F]
   Validation(Map<F, List<ValidaError>> errorsMap)
       : errorsMap = Map.unmodifiable(errorsMap),
         numErrors = computeNumErrors(errorsMap.values.expand((e) => e));
 
+  /// Computes the number of errors in a collection of errors.
+  /// Also counts nested errors.
   static int computeNumErrors(Iterable<ValidaError> errors) {
     return errors.fold(
       0,
@@ -75,16 +80,28 @@ abstract class Validation<T, F> {
     );
   }
 
+  /// The list of errors for each field
   final Map<F, List<ValidaError>> errorsMap;
+
+  /// The number of errors encountered in validation
   final int numErrors;
 
+  /// The validated value
   T get value;
+
+  /// The fields error information in an improved API over [errorsMap]
   Object get fields;
 
+  /// All encountered errors
   Iterable<ValidaError> get allErrors => errorsMap.values.expand((e) => e);
+
+  /// Whether there were errors in validation
   bool get hasErrors => numErrors > 0;
+
+  /// Whether the validation was successful
   bool get isValid => !hasErrors;
 
+  /// The validated value. Null if there were errors
   Validated<T>? get validated => isValid ? Validated._(value) : null;
 
   ValidaError? toError({required String property}) {
@@ -96,5 +113,6 @@ abstract class Validation<T, F> {
 class Validator<T, V extends Validation<T, Object>> {
   final V Function(T) validate;
 
+  /// An object that can validate a value of type [T]
   const Validator(this.validate);
 }

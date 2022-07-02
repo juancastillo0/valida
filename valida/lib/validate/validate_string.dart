@@ -50,7 +50,7 @@ class ValidaString extends ValidaField<String> implements ValidaLength {
   /// Should be an url
   final bool? isUrl;
 
-  /// Should be an uuid
+  /// Should be an uuid of the specific version
   final UUIDVersion? isUUID;
 
   /// Should be a currency
@@ -73,22 +73,46 @@ class ValidaString extends ValidaField<String> implements ValidaLength {
 
   // isVariableWidth, isHalfWidth, isFullWidth, isSurrogatePair,
   // isPostalCode, isMultibyte,
+
+  /// Should be ASCII
   final bool? isAscii;
+
+  /// Should be Base64 encoded
   final bool? isBase64;
+
+  /// Should be a credit card
   final bool? isCreditCard;
+
+  /// Should be a FQDN
   final bool? isFQDN;
+
+  /// Should be hexadecimal
   final bool? isHexadecimal;
+
+  /// Should be a hex color
   final bool? isHexColor;
+
+  /// Should be an integer
   final bool? isInt;
+
+  /// Should be a floating point number
   final bool? isFloat;
+
+  /// Should be a ISBN of the specific version
   final ISBNVersion? isISBN;
+
+  /// Should be an IP
   final IPVersion? isIP;
 
+  /// Should be a number divisible by this one
   final int? isDivisibleBy;
   final int? surrogatePairsLengthMin;
   final int? surrogatePairsLengthMax;
 
+  /// Should be lowercase
   final bool? isLowercase;
+
+  /// Should be uppercase
   final bool? isUppercase;
 
   @override

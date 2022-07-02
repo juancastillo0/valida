@@ -113,9 +113,19 @@ abstract class ValidaComparable<T extends Comparable<T>> {
 class ValidaComparison<T extends Comparable<T>> {
   /// Whether to use [Comparable.compare] or `<` and `>`.
   final bool useCompareTo;
+
+  /// The validated value should be more than what [more] represents
   final CompVal<T>? more;
+
+  /// The validated value should be less than what [less] represents
   final CompVal<T>? less;
+
+  /// The validated value should be more than or equal
+  /// to what [moreEq] represents
   final CompVal<T>? moreEq;
+
+  /// The validated value should be less than or equal
+  /// to what [lessEq] represents
   final CompVal<T>? lessEq;
 
   /// The comparison for validators which are comparable
@@ -242,11 +252,21 @@ abstract class ValidaField<T> implements ValidaCustom<T> {
 /// Specification of the validation that should be
 /// executed over a given [num]
 class ValidaNum extends ValidaField<num> implements ValidaComparable<num> {
-  final List<num>? isIn; // enum
+  /// Should be within the array
+  final List<num>? isIn;
+
+  /// Should be at a minimum this number
   final num? min;
+
+  /// Should be at a maximum this number
   final num? max;
+
+  /// Should be an integer
   final bool? isInt;
+
+  /// Should be divisible by the given number
   final num? isDivisibleBy;
+
   @override
   final ValidaComparison<num>? comp;
 
@@ -376,7 +396,10 @@ class ValidaDuration extends ValidaField<Duration>
 /// executed over a given [DateTime]
 class ValidaDate extends ValidaField<DateTime>
     implements ValidaComparable<String> {
+  /// The minimum date the validated value should be
   final String? min;
+
+  /// The maximum date the validated value should be
   final String? max;
 
   @override

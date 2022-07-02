@@ -2,19 +2,25 @@ import 'package:valida/serde_type.dart';
 import 'package:valida/validate/validate.dart';
 
 /// Specification of the validation that should be
-/// executed over a given value which has length
+/// executed over a given value which has a length.
+/// For example, collections like lists, sets and maps.
 abstract class ValidaLength {
+  /// The minimum length the value should be
   int? get minLength;
+
+  /// The maximum length the value should be
   int? get maxLength;
 }
 
 /// Specification of the validation that should be
-/// executed over a given List
+/// executed over a given [List]
 class ValidaList<T> extends ValidaField<List<T>> implements ValidaLength {
   @override
   final int? minLength;
   @override
   final int? maxLength;
+
+  /// Validates each value in the list with [each]'s configuration
   final ValidaField<T>? each;
 
   @override
@@ -25,6 +31,8 @@ class ValidaList<T> extends ValidaField<List<T>> implements ValidaLength {
   @override
   final String? customValidateName;
 
+  /// Specification of the validation that should be
+  /// executed over a given [List]
   const ValidaList({
     this.minLength,
     this.maxLength,
@@ -64,12 +72,14 @@ class ValidaList<T> extends ValidaField<List<T>> implements ValidaLength {
 }
 
 /// Specification of the validation that should be
-/// executed over a given Set
+/// executed over a given [Set]
 class ValidaSet<T> extends ValidaField<Set<T>> implements ValidaLength {
   @override
   final int? minLength;
   @override
   final int? maxLength;
+
+  /// Validates each value in the set with [each]'s configuration
   final ValidaField<T>? each;
 
   @override
@@ -80,6 +90,8 @@ class ValidaSet<T> extends ValidaField<Set<T>> implements ValidaLength {
   @override
   final String? customValidateName;
 
+  /// Specification of the validation that should be
+  /// executed over a given [Set]
   const ValidaSet({
     this.minLength,
     this.maxLength,
@@ -120,13 +132,17 @@ class ValidaSet<T> extends ValidaField<Set<T>> implements ValidaLength {
 }
 
 /// Specification of the validation that should be
-/// executed over a given Map
+/// executed over a given [Map]
 class ValidaMap<K, V> extends ValidaField<Map<K, V>> implements ValidaLength {
   @override
   final int? minLength;
   @override
   final int? maxLength;
+
+  /// Validates each key in the map with [eachKey]'s configuration
   final ValidaField<K>? eachKey;
+
+  /// Validates each value in the map with [eachValue]'s configuration
   final ValidaField<V>? eachValue;
 
   @override
@@ -138,7 +154,7 @@ class ValidaMap<K, V> extends ValidaField<Map<K, V>> implements ValidaLength {
   final String? customValidateName;
 
   /// Specification of the validation that should be
-  /// executed over a given Map
+  /// executed over a given [Map]
   const ValidaMap({
     this.minLength,
     this.maxLength,
