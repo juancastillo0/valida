@@ -3,12 +3,14 @@ import 'dart:convert';
 import 'package:meta/meta.dart';
 import 'package:valida/serde_type.dart';
 
+import 'package:valida/validate/models/to_json_mixin.dart';
+
 /// A value in a comparison
 ///
 /// [CompVal.ref] is a reference to another field
 /// [CompVal.list] accept multiple values in the comparison
 @immutable
-abstract class CompVal<T extends Comparable<T>> {
+abstract class CompVal<T extends Comparable<T>> with ToJson {
   const CompVal._();
 
   static const fieldsSerde = SerdeType.late(_makeFieldsSerde);
@@ -139,7 +141,7 @@ abstract class CompVal<T extends Comparable<T>> {
     }
   }
 
-  /// Returns a Map with JSON representation
+  @override
   Map<String, Object?> toJson();
 }
 

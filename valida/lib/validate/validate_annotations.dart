@@ -12,7 +12,7 @@ export 'validate_string.dart';
 /// field with be nullable
 /// if [constErrors] is true, the errors will be constant values
 /// if [enumFields] is true, the field type will be enums
-class Valida implements ValidaCustom<Object?> {
+class Valida with ToJson implements ValidaCustom<Object?> {
   /// If true, the error lists for each
   final bool nullableErrorLists;
 
@@ -51,6 +51,7 @@ class Valida implements ValidaCustom<Object?> {
     'customValidate': SerdeType.function,
   };
 
+  @override
   Map<String, Object?> toJson() {
     return {
       'nullableErrorLists': nullableErrorLists,
@@ -114,7 +115,7 @@ abstract class ValidaComparable<T extends Comparable<T>> {
 }
 
 /// The comparison for validators which are comparable
-class ValidaComparison<T extends Comparable<T>> {
+class ValidaComparison<T extends Comparable<T>> with ToJson {
   /// Whether to use [Comparable.compare] or `<` and `>`.
   final bool useCompareTo;
 
@@ -220,6 +221,7 @@ class ValidaComparison<T extends Comparable<T>> {
     }
   }
 
+  @override
   Map<String, Object?> toJson() {
     return {
       'more': more?.toJson(),
@@ -242,12 +244,13 @@ class ValidaComparison<T extends Comparable<T>> {
 }
 
 /// Interface for validators which are fields of a class
-abstract class ValidaField<T> implements ValidaCustom<T> {
+abstract class ValidaField<T> with ToJson implements ValidaCustom<T> {
   /// Interface for validators which are fields of a class
   const ValidaField();
 
   /// Returns a [Map] with a JSON representation of
   /// this validation specification
+  @override
   Map<String, Object?> toJson();
 
   /// Executes validation of [property] for the object whose fields can

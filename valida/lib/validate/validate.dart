@@ -1,3 +1,4 @@
+export 'models/to_json_mixin.dart';
 export 'validate_annotations.dart';
 
 /// Error generated in the process of
