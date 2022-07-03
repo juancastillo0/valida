@@ -1,3 +1,5 @@
+import 'package:valida/validate/validate_annotations.dart';
+
 export 'models/to_json_mixin.dart';
 export 'validate_annotations.dart';
 
@@ -116,4 +118,23 @@ class Validator<T, V extends Validation<T, Object>> {
 
   /// An object that can validate a value of type [T]
   const Validator(this.validate);
+}
+
+/// The specification of the validation for a given type [T] with field [F]
+class ValidaSpec<T, F> {
+  /// A Map with specification of the validation for each field
+  final Map<F, ValidaField> fieldsMap;
+
+  /// Returns the [field] in [value]
+  final Object? Function(T value, String field) getField;
+
+  /// Validates [value] globally. It is not specific to only one field.
+  final List<ValidaError> Function(T value)? globalValidate;
+
+  /// The specification of the validation for a given type [T] with field [F]
+  const ValidaSpec({
+    required this.fieldsMap,
+    required this.getField,
+    this.globalValidate,
+  });
 }

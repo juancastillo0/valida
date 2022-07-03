@@ -77,6 +77,83 @@ class ValidaFunction {
   const ValidaFunction();
 }
 
+/// Annotation for specifying de validation for a nested field. A nested field
+/// is of a class that has [Valida] annotation.
+class ValidaNested<T> extends ValidaField<T> {
+  /// Whether to omit the validation for this field
+  final bool? omit;
+
+  /// A function that executes the validation.
+  /// By default, the generated function will be used
+  final Validation Function(T value)? overrideValidation;
+
+  /// The name of the function used for validation. This value should not
+  /// be used directly, since it is used for code generation
+  final String? overrideValidationName;
+
+  @override
+  final List<ValidaError> Function(T)? customValidate;
+
+  @override
+  final String? customValidateName;
+
+  /// Annotation for specifying de validation for a nested field. A nested field
+  /// is of a class that has [Valida] annotation.
+  const ValidaNested({
+    this.omit,
+    this.overrideValidation,
+    this.overrideValidationName,
+    this.customValidate,
+    this.customValidateName,
+  });
+
+  static const fieldsSerde = {
+    'omit': SerdeType.bool,
+    'customValidate': SerdeType.function,
+    'overrideValidation': SerdeType.function,
+  };
+
+  @override
+  Map<String, Object?> toJson() {
+    return {
+      ValidaField.variantTypeString: variantType.toString(),
+      'omit': omit,
+      'customValidate': customValidateName,
+      'overrideValidation': overrideValidationName,
+    };
+  }
+
+  factory ValidaNested.fromJson(Map<String, Object?> json) {
+    return ValidaNested(
+      omit: json['omit'] as bool?,
+      customValidateName: json['customValidate'] as String?,
+      overrideValidationName: json['overrideValidation'] as String?,
+    );
+  }
+
+  @override
+  List<ValidaError> validate(
+    String property,
+    Object? Function(String property) getter,
+  ) {
+    final List<ValidaError> errors = [];
+    final value = getter(property) as T?;
+    if (omit == true || value == null) return errors;
+
+    if (overrideValidation != null) {
+      final error = overrideValidation!(value).toError(property: property);
+      if (error != null) errors.add(error);
+    }
+    if (customValidate != null) errors.addAll(customValidate!(value));
+
+    return errors;
+  }
+
+  @override
+  // TODO: implement variantType
+  ValidaFieldType get variantType => throw UnimplementedError();
+}
+
 /// The type of value being validated
 enum ValidaFieldType {
   num,
