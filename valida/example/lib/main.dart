@@ -24,7 +24,7 @@ class FormTest {
   @ValidaString(maxLength: 20, contains: '@')
   final String shortStr;
 
-  @ValidaNum(isInt: true, min: 0, customValidate: _customValidateNum)
+  @ValidaNum(isInt: true, min: 0, customValidate: FormTest._customValidateNum)
   final num positiveInt;
 
   static List<ValidaError> _customValidateNum(num value) {
@@ -107,4 +107,44 @@ class NestedField {
     required this.dateWith2021Min,
     required this.optionalDateWithNowMax,
   });
+}
+
+
+List<ValidaError> _customValidateSingleFunction(Object? _args) {
+  final args = _args! as SingleFunctionArgs;
+  return [
+    if (args.name == 'none' && args.lastName == 'NONE')
+      ValidaError(
+        property: 'name',
+        value: args.name,
+        errorCode: 'Custom.noNoneName',
+        message: "Can't have a 'none' name and a 'NONE' last name",
+      ),
+  ];
+}
+
+@Valida(customValidate: _customValidateSingleFunction)
+int singleFunction(
+  @ValidaString(isLowercase: true, isAlpha: true) String name, [
+  @ValidaString(isUppercase: true, isAlpha: true) String lastName = 'NONE',
+]) {
+  final validation = SingleFunctionArgs(name, lastName).validate();
+  if (validation.hasErrors) {
+    throw validation;
+  }
+  return name.length + lastName.length;
+}
+
+@Valida()
+int _singleFunction2(
+  @ValidaString(isLowercase: true, isAlpha: true) String name, {
+  @ValidaString(isUppercase: true, isAlpha: true) String lastName = 'NONE',
+  @ValidaList<Object>(minLength: 1) required List<Object> nonEmptyList,
+}) {
+  final validated = _SingleFunction2Args(
+    name,
+    lastName: lastName,
+    nonEmptyList: nonEmptyList,
+  ).validatedOrThrow();
+  return name.length + lastName.length + nonEmptyList.length;
 }
