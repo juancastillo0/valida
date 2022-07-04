@@ -31,8 +31,9 @@ abstract class CompVal<T extends Comparable<T>> with ToJson {
 
   /// The [ref] is the name of the field whose value will be compared
   const factory CompVal.ref(
-    String ref,
-  ) = CompValueRef<T>;
+    String ref, {
+    bool isRequired,
+  }) = CompValueRef<T>;
 
   /// A single value will be compared. Same as `CompVal(value)`.
   const factory CompVal.single(
@@ -45,13 +46,13 @@ abstract class CompVal<T extends Comparable<T>> with ToJson {
   ) = CompValueList<T>;
 
   _T when<_T>({
-    required _T Function(String ref) ref,
+    required _T Function(String ref, bool isRequired) ref,
     required _T Function(T value) single,
     required _T Function(List<CompVal<T>> values) list,
   }) {
     final v = this;
     if (v is CompValueRef<T>) {
-      return ref(v.ref);
+      return ref(v.ref, v.isRequired);
     } else if (v is CompValueSingle<T>) {
       return single(v.value);
     } else if (v is CompValueList<T>) {
@@ -62,13 +63,13 @@ abstract class CompVal<T extends Comparable<T>> with ToJson {
 
   _T maybeWhen<_T>({
     required _T Function() orElse,
-    _T Function(String ref)? ref,
+    _T Function(String ref, bool isRequired)? ref,
     _T Function(T value)? single,
     _T Function(List<CompVal<T>> values)? list,
   }) {
     final v = this;
     if (v is CompValueRef<T>) {
-      return ref != null ? ref(v.ref) : orElse.call();
+      return ref != null ? ref(v.ref, v.isRequired) : orElse.call();
     } else if (v is CompValueSingle<T>) {
       return single != null ? single(v.value) : orElse.call();
     } else if (v is CompValueList<T>) {
@@ -239,10 +240,12 @@ class TypeCompVal {
 
 class CompValueRef<T extends Comparable<T>> extends CompVal<T> {
   final String ref;
+  final bool isRequired;
 
   const CompValueRef(
-    this.ref,
-  ) : super._();
+    this.ref, {
+    this.isRequired = true,
+  }) : super._();
 
   @override
   // ignore: avoid_field_initializers_in_const_classes
@@ -260,12 +263,13 @@ class CompValueRef<T extends Comparable<T>> extends CompVal<T> {
 
     return CompValueRef<T>(
       map['ref']! as String,
+      isRequired: map['isRequired']! as bool,
     );
   }
 
   @override
   String toString() {
-    return ref;
+    return '$ref${isRequired ? '!' : ''}';
   }
 
   @override
@@ -273,11 +277,13 @@ class CompValueRef<T extends Comparable<T>> extends CompVal<T> {
     return {
       'variantType': 'ref',
       'ref': ref,
+      'isRequired': isRequired,
     };
   }
 
   static const fieldsSerde = {
     'ref': SerdeType.str,
+    'isRequired': SerdeType.bool,
   };
 }
 

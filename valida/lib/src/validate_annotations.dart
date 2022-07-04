@@ -185,6 +185,34 @@ abstract class ValidaCustom<T> {
   String? get customValidateName;
 }
 
+/// A result of a comparison
+enum ComparisonResult {
+  /// When the comparison was successful
+  success,
+
+  /// When the comparison had an error
+  error,
+
+  /// When the value was less than the other
+  less,
+
+  /// When the value was more than the other
+  more,
+
+  /// When the value was equal to the other
+  equal;
+
+  /// Returns the result parsed from and integer.
+  /// =0 equal, <0 less and >0 more.
+  static ComparisonResult fromInt(int value) {
+    return value == 0
+        ? equal
+        : value > 0
+            ? more
+            : less;
+  }
+}
+
 /// Interface for validators which are comparable
 abstract class ValidaComparable<T extends Comparable<T>> {
   /// The comparison validation specification
@@ -231,40 +259,52 @@ class ValidaComparison<T extends Comparable<T>> with ToJson {
   /// whose fields can be accessed with [getter] using [_compare]
   Iterable<ValidaError> validate(
     String property,
-    int Function(T) _compare,
-    T Function(String) getter,
+    ComparisonResult Function(T) _compare,
+    T? Function(String) getter,
   ) sync* {
     final value = getter(property);
-    int? _compareCompVal(CompVal<T> compVal) {
+    ComparisonResult _compareCompVal(CompVal<T> compVal) {
       return compVal.when(
-        // TODO: handle nullable getter(ref)
-        ref: (ref) => _compare(getter(ref)),
+        ref: (ref, isRequired) {
+          final toCompare = getter(ref);
+          if (toCompare == null) {
+            return isRequired
+                ? ComparisonResult.error
+                : ComparisonResult.success;
+          }
+          return _compare(toCompare);
+        },
         single: _compare,
         list: (list) {
           bool less = false;
           bool more = false;
           bool eq = false;
-          bool unknown = false;
+          bool error = false;
+          bool allSuccess = true;
           final skipped = list.map(_compareCompVal).any((element) {
-            if (element != null) {
-              less = less || element < 0;
-              more = more || element > 0;
-              eq = eq || element == 0;
+            allSuccess = allSuccess && element == ComparisonResult.success;
+            if (element != ComparisonResult.error) {
+              less = less || element == ComparisonResult.less;
+              more = more || element == ComparisonResult.more;
+              eq = eq || element == ComparisonResult.equal;
             } else {
-              unknown = true;
+              error = true;
             }
-            return unknown || (less && more || less && eq || more && eq);
+            return error || (less && more || less && eq || more && eq);
           });
-          if (skipped) return null;
-          if (eq) return 0;
-          if (less) return -1;
-          if (more) return 1;
-          return null;
+          if (skipped) return ComparisonResult.error;
+          if (eq) return ComparisonResult.equal;
+          if (less) return ComparisonResult.less;
+          if (more) return ComparisonResult.more;
+          if (allSuccess) return ComparisonResult.success;
+          return ComparisonResult.error;
         },
       );
     }
 
-    if (less != null && (_compareCompVal(less!) ?? 1) > 0) {
+    if (less != null &&
+        !const [ComparisonResult.success, ComparisonResult.less]
+            .contains(_compareCompVal(less!))) {
       yield ValidaError(
         property: property,
         value: value,
@@ -272,7 +312,12 @@ class ValidaComparison<T extends Comparable<T>> with ToJson {
         message: 'Should be less than ${less}',
       );
     }
-    if (lessEq != null && (_compareCompVal(lessEq!) ?? 1) >= 0) {
+    if (lessEq != null &&
+        !const [
+          ComparisonResult.success,
+          ComparisonResult.less,
+          ComparisonResult.equal,
+        ].contains(_compareCompVal(lessEq!))) {
       yield ValidaError(
         property: property,
         value: value,
@@ -280,7 +325,9 @@ class ValidaComparison<T extends Comparable<T>> with ToJson {
         message: 'Should be less than or equal to ${lessEq}',
       );
     }
-    if (more != null && (_compareCompVal(more!) ?? -1) < 0) {
+    if (more != null &&
+        !const [ComparisonResult.success, ComparisonResult.more]
+            .contains(_compareCompVal(more!))) {
       yield ValidaError(
         property: property,
         value: value,
@@ -288,7 +335,12 @@ class ValidaComparison<T extends Comparable<T>> with ToJson {
         message: 'Should be more than ${more}',
       );
     }
-    if (moreEq != null && (_compareCompVal(moreEq!) ?? -1) <= 0) {
+    if (moreEq != null &&
+        !const [
+          ComparisonResult.success,
+          ComparisonResult.more,
+          ComparisonResult.equal,
+        ].contains(_compareCompVal(moreEq!))) {
       yield ValidaError(
         property: property,
         value: value,
@@ -535,14 +587,14 @@ class ValidaNum extends ValidaField<num> implements ValidaComparable<num> {
     }
     final _comp = comp;
     if (_comp != null) {
-      int _compare(num single) {
+      ComparisonResult _compare(num single) {
         return _comp.useCompareTo
-            ? value.compareTo(single)
+            ? ComparisonResult.fromInt(value.compareTo(single))
             : (value < single
-                ? -1
+                ? ComparisonResult.less
                 : value == single
-                    ? 0
-                    : 1);
+                    ? ComparisonResult.equal
+                    : ComparisonResult.more);
       }
 
       errors.addAll(
@@ -652,14 +704,14 @@ class ValidaDuration extends ValidaField<Duration>
 
     final _comp = comp;
     if (_comp != null) {
-      int _compare(Duration single) {
+      ComparisonResult _compare(Duration single) {
         return _comp.useCompareTo
-            ? value.compareTo(single)
+            ? ComparisonResult.fromInt(value.compareTo(single))
             : (value < single
-                ? -1
+                ? ComparisonResult.less
                 : value == single
-                    ? 0
-                    : 1);
+                    ? ComparisonResult.equal
+                    : ComparisonResult.more);
       }
 
       errors.addAll(
@@ -767,15 +819,15 @@ class ValidaDate extends ValidaField<DateTime>
 
     final _comp = comp;
     if (_comp != null) {
-      int _compare(String _single) {
+      ComparisonResult _compare(String _single) {
         final single = ValidaDate.parseDate(_single);
         return _comp.useCompareTo
-            ? value.compareTo(single)
+            ? ComparisonResult.fromInt(value.compareTo(single))
             : (value.isBefore(single)
-                ? -1
+                ? ComparisonResult.less
                 : value.isAtSameMomentAs(single)
-                    ? 0
-                    : 1);
+                    ? ComparisonResult.equal
+                    : ComparisonResult.more);
       }
 
       errors.addAll(

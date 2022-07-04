@@ -770,7 +770,7 @@ List<ValidationItem> compValidations<T extends Comparable<T>>(
   String Function(T) makeString = _defaultMakeString,
 }) {
   String comparison(CompVal<T> c, String operator) {
-    return c.when(ref: (ref) {
+    return c.when(ref: (ref, isRequired) {
       return '$prefix$fieldName.compareTo($prefix$ref) $operator';
     }, single: (single) {
       return '$prefix$fieldName.compareTo(${makeString(single)}) $operator';
