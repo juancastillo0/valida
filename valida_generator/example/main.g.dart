@@ -40,41 +40,70 @@ class FormTestValidationFields {
 class FormTestValidation extends Validation<FormTest, FormTestField> {
   FormTestValidation(this.errorsMap, this.value, this.fields)
       : super(errorsMap);
-
+  @override
   final Map<FormTestField, List<ValidaError>> errorsMap;
-
+  @override
   final FormTest value;
-
+  @override
   final FormTestValidationFields fields;
 
-  static const validationSpec = {
-    'longStr': ValidaString(
-        minLength: 15,
-        maxLength: 50,
-        matches: r'^[a-zA-Z]+$',
-        customValidate: _customValidateStr),
-    'shortStr': ValidaString(maxLength: 20, contains: '@'),
-    'positiveInt': ValidaNum(
-        isInt: true, min: 0, customValidate: FormTest._customValidateNum),
-    'optionalDecimal': ValidaNum(
-        min: 0,
-        max: 1,
-        comp: ValidaComparison<num>(
-            less: CompVal(0),
-            moreEq: CompVal.list([CompVal.ref('positiveInt')]))),
-    'nonEmptyList': ValidaList(
-        minLength: 1, each: ValidaString(isDate: true, maxLength: 3)),
-    'identifier': ValidaString(isUUID: UUIDVersion.v4),
-  };
+  /// Validates [value] and returns a [FormTestValidation] with the errors found as a result
+  static FormTestValidation fromValue(FormTest value) {
+    Object? _getProperty(String property) => spec.getField(value, property);
 
-  static List<ValidaError> globalValidate(FormTest value) => [
+    final errors = <FormTestField, List<ValidaError>>{
+      if (spec.globalValidate != null)
+        FormTestField.global: spec.globalValidate!(value),
+      ...spec.fieldsMap.map(
+        (key, field) => MapEntry(
+          key,
+          field.validate(key.name, _getProperty),
+        ),
+      )
+    };
+    errors.removeWhere((key, value) => value.isEmpty);
+    return FormTestValidation(errors, value, FormTestValidationFields(errors));
+  }
+
+  static const spec = ValidaSpec(
+    fieldsMap: {
+      FormTestField.nested: ValidaNested<NestedField>(
+        omit: null,
+        customValidate: null,
+        overrideValidation: validateNestedField,
+      ),
+      FormTestField.longStr: ValidaString(
+          minLength: 15,
+          maxLength: 50,
+          matches: r'^[a-zA-Z]+$',
+          customValidate: _customValidateStr),
+      FormTestField.shortStr: ValidaString(maxLength: 20, contains: '@'),
+      FormTestField.positiveInt: ValidaNum(
+          isInt: true, min: 0, customValidate: FormTest._customValidateNum),
+      FormTestField.optionalDecimal: ValidaNum(
+          min: 0,
+          max: 1,
+          comp: ValidaComparison<num>(
+              less: CompVal(0),
+              moreEq: CompVal.list([CompVal.ref('positiveInt')]))),
+      FormTestField.nonEmptyList: ValidaList(
+          minLength: 1, each: ValidaString(isDate: true, maxLength: 3)),
+      FormTestField.identifier: ValidaString(isUUID: UUIDVersion.v4),
+    },
+    getField: _getField,
+    globalValidate: _globalValidate,
+  );
+
+  static List<ValidaError> _globalValidate(FormTest value) => [
         ...FormTest._customValidate2(value),
         ...value._customValidate3(),
         ...FormTest._customValidate(value),
       ];
 
-  static Object? getField(FormTest value, String field) {
+  static Object? _getField(FormTest value, String field) {
     switch (field) {
+      case 'nested':
+        return value.nested;
       case 'longStr':
         return value.longStr;
       case 'shortStr':
@@ -246,22 +275,42 @@ class NestedFieldValidationFields {
 class NestedFieldValidation extends Validation<NestedField, NestedFieldField> {
   NestedFieldValidation(this.errorsMap, this.value, this.fields)
       : super(errorsMap);
-
+  @override
   final Map<NestedFieldField, List<ValidaError>> errorsMap;
-
+  @override
   final NestedField value;
-
+  @override
   final NestedFieldValidationFields fields;
 
-  static const validationSpec = {
-    'timeStr': ValidaString(isTime: true),
-    'dateWith2021Min': ValidaDate(min: '2021-01-01'),
-    'optionalDateWithNowMax': ValidaDate(max: 'now'),
-  };
+  /// Validates [value] and returns a [NestedFieldValidation] with the errors found as a result
+  static NestedFieldValidation fromValue(NestedField value) {
+    Object? _getProperty(String property) => spec.getField(value, property);
 
-  static List<ValidaError> globalValidate(NestedField value) => [];
+    final errors = <NestedFieldField, List<ValidaError>>{
+      ...spec.fieldsMap.map(
+        (key, field) => MapEntry(
+          key,
+          field.validate(key.name, _getProperty),
+        ),
+      )
+    };
+    errors.removeWhere((key, value) => value.isEmpty);
+    return NestedFieldValidation(
+        errors, value, NestedFieldValidationFields(errors));
+  }
 
-  static Object? getField(NestedField value, String field) {
+  static const spec = ValidaSpec(
+    fieldsMap: {
+      NestedFieldField.timeStr: ValidaString(isTime: true),
+      NestedFieldField.dateWith2021Min: ValidaDate(min: '2021-01-01'),
+      NestedFieldField.optionalDateWithNowMax: ValidaDate(max: 'now'),
+    },
+    getField: _getField,
+  );
+
+  static List<ValidaError> _globalValidate(NestedField value) => [];
+
+  static Object? _getField(NestedField value, String field) {
     switch (field) {
       case 'timeStr':
         return value.timeStr;
@@ -311,7 +360,7 @@ NestedFieldValidation validateNestedField(NestedField value) {
 }
 
 /// The arguments for [singleFunction].
-class SingleFunctionArgs {
+class SingleFunctionArgs with ToJson {
   final String name;
   final String lastName;
 
@@ -336,7 +385,7 @@ class SingleFunctionArgs {
     return validated;
   }
 
-  /// Returns a Map with all fields
+  @override
   Map<String, Object?> toJson() => {
         'name': name,
         'lastName': lastName,
@@ -382,23 +431,48 @@ class SingleFunctionArgsValidation
     extends Validation<SingleFunctionArgs, SingleFunctionArgsField> {
   SingleFunctionArgsValidation(this.errorsMap, this.value, this.fields)
       : super(errorsMap);
-
+  @override
   final Map<SingleFunctionArgsField, List<ValidaError>> errorsMap;
-
+  @override
   final SingleFunctionArgs value;
-
+  @override
   final SingleFunctionArgsValidationFields fields;
 
-  static const validationSpec = {
-    'name': ValidaString(isLowercase: true, isAlpha: true),
-    'lastName': ValidaString(isUppercase: true, isAlpha: true),
-  };
+  /// Validates [value] and returns a [SingleFunctionArgsValidation] with the errors found as a result
+  static SingleFunctionArgsValidation fromValue(SingleFunctionArgs value) {
+    Object? _getProperty(String property) => spec.getField(value, property);
 
-  static List<ValidaError> globalValidate(SingleFunctionArgs value) => [
+    final errors = <SingleFunctionArgsField, List<ValidaError>>{
+      if (spec.globalValidate != null)
+        SingleFunctionArgsField.global: spec.globalValidate!(value),
+      ...spec.fieldsMap.map(
+        (key, field) => MapEntry(
+          key,
+          field.validate(key.name, _getProperty),
+        ),
+      )
+    };
+    errors.removeWhere((key, value) => value.isEmpty);
+    return SingleFunctionArgsValidation(
+        errors, value, SingleFunctionArgsValidationFields(errors));
+  }
+
+  static const spec = ValidaSpec(
+    fieldsMap: {
+      SingleFunctionArgsField.name:
+          ValidaString(isLowercase: true, isAlpha: true),
+      SingleFunctionArgsField.lastName:
+          ValidaString(isUppercase: true, isAlpha: true),
+    },
+    getField: _getField,
+    globalValidate: _globalValidate,
+  );
+
+  static List<ValidaError> _globalValidate(SingleFunctionArgs value) => [
         ..._customValidateSingleFunction(value),
       ];
 
-  static Object? getField(SingleFunctionArgs value, String field) {
+  static Object? _getField(SingleFunctionArgs value, String field) {
     switch (field) {
       case 'name':
         return value.name;
@@ -446,7 +520,7 @@ SingleFunctionArgsValidation validateSingleFunctionArgs(
 }
 
 /// The arguments for [_singleFunction2].
-class _SingleFunction2Args {
+class _SingleFunction2Args with ToJson {
   final String name;
   final List<dynamic> nonEmptyList;
   final String lastName;
@@ -474,7 +548,7 @@ class _SingleFunction2Args {
     return validated;
   }
 
-  /// Returns a Map with all fields
+  @override
   Map<String, Object?> toJson() => {
         'name': name,
         'nonEmptyList': nonEmptyList,
@@ -524,22 +598,44 @@ class _SingleFunction2ArgsValidation
     extends Validation<_SingleFunction2Args, _SingleFunction2ArgsField> {
   _SingleFunction2ArgsValidation(this.errorsMap, this.value, this.fields)
       : super(errorsMap);
-
+  @override
   final Map<_SingleFunction2ArgsField, List<ValidaError>> errorsMap;
-
+  @override
   final _SingleFunction2Args value;
-
+  @override
   final _SingleFunction2ArgsValidationFields fields;
 
-  static const validationSpec = {
-    'name': ValidaString(isLowercase: true, isAlpha: true),
-    'lastName': ValidaString(isUppercase: true, isAlpha: true),
-    'nonEmptyList': ValidaList(minLength: 1),
-  };
+  /// Validates [value] and returns a [_SingleFunction2ArgsValidation] with the errors found as a result
+  static _SingleFunction2ArgsValidation fromValue(_SingleFunction2Args value) {
+    Object? _getProperty(String property) => spec.getField(value, property);
 
-  static List<ValidaError> globalValidate(_SingleFunction2Args value) => [];
+    final errors = <_SingleFunction2ArgsField, List<ValidaError>>{
+      ...spec.fieldsMap.map(
+        (key, field) => MapEntry(
+          key,
+          field.validate(key.name, _getProperty),
+        ),
+      )
+    };
+    errors.removeWhere((key, value) => value.isEmpty);
+    return _SingleFunction2ArgsValidation(
+        errors, value, _SingleFunction2ArgsValidationFields(errors));
+  }
 
-  static Object? getField(_SingleFunction2Args value, String field) {
+  static const spec = ValidaSpec(
+    fieldsMap: {
+      _SingleFunction2ArgsField.name:
+          ValidaString(isLowercase: true, isAlpha: true),
+      _SingleFunction2ArgsField.lastName:
+          ValidaString(isUppercase: true, isAlpha: true),
+      _SingleFunction2ArgsField.nonEmptyList: ValidaList(minLength: 1),
+    },
+    getField: _getField,
+  );
+
+  static List<ValidaError> _globalValidate(_SingleFunction2Args value) => [];
+
+  static Object? _getField(_SingleFunction2Args value, String field) {
     switch (field) {
       case 'name':
         return value.name;
