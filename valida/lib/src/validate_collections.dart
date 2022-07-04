@@ -1,5 +1,5 @@
 import 'package:valida/serde_type.dart';
-import 'package:valida/validate/validate.dart';
+import 'package:valida/src/validate.dart';
 
 /// Specification of the validation that should be
 /// executed over a given value which has a length.

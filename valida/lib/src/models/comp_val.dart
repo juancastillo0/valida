@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:meta/meta.dart';
 import 'package:valida/serde_type.dart';
 
-import 'package:valida/validate/models/to_json_mixin.dart';
+import 'package:valida/src/models/to_json_mixin.dart';
 
 /// A value in a comparison
 ///

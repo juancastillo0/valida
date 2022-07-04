@@ -1,5 +1,5 @@
 import 'package:valida/serde_type.dart';
-import 'package:valida/validate/validate.dart';
+import 'package:valida/src/validate.dart';
 
 export 'models/comp_val.dart';
 export 'validate_collections.dart';

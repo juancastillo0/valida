@@ -1,4 +1,4 @@
-import 'package:valida/validate/validate_annotations.dart';
+import 'package:valida/src/validate_annotations.dart';
 
 export 'models/to_json_mixin.dart';
 export 'validate_annotations.dart';

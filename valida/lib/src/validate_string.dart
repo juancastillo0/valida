@@ -1,5 +1,5 @@
 import 'package:valida/serde_type.dart';
-import 'package:valida/validate/validate.dart';
+import 'package:valida/src/validate.dart';
 import 'package:validators/validators.dart' as validators;
 
 /// Different IP versions

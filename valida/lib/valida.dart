@@ -1,3 +1,3 @@
 library valida;
 
-export 'validate/validate.dart';
+export 'src/validate.dart';
