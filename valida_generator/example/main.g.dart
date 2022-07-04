@@ -14,7 +14,7 @@ enum FormTestField {
   nonEmptyList,
   identifier,
   nested,
-  global,
+  $global
 }
 
 class FormTestValidationFields {
@@ -53,7 +53,7 @@ class FormTestValidation extends Validation<FormTest, FormTestField> {
 
     final errors = <FormTestField, List<ValidaError>>{
       if (spec.globalValidate != null)
-        FormTestField.global: spec.globalValidate!(value),
+        FormTestField.$global: spec.globalValidate!(value),
       ...spec.fieldsMap.map(
         (key, field) => MapEntry(
           key,
@@ -132,7 +132,7 @@ FormTestValidation validateFormTest(FormTest value) {
     if (_nestedValidation != null) _nestedValidation
   ];
 
-  errors[FormTestField.global] = [
+  errors[FormTestField.$global] = [
     ...FormTest._customValidate2(value),
     ...value._customValidate3(),
     ...FormTest._customValidate(value),
@@ -415,7 +415,7 @@ enum SingleFunctionArgsField {
   name,
   lastName,
 
-  global,
+  $global
 }
 
 class SingleFunctionArgsValidationFields {
@@ -444,7 +444,7 @@ class SingleFunctionArgsValidation
 
     final errors = <SingleFunctionArgsField, List<ValidaError>>{
       if (spec.globalValidate != null)
-        SingleFunctionArgsField.global: spec.globalValidate!(value),
+        SingleFunctionArgsField.$global: spec.globalValidate!(value),
       ...spec.fieldsMap.map(
         (key, field) => MapEntry(
           key,
@@ -488,7 +488,7 @@ SingleFunctionArgsValidation validateSingleFunctionArgs(
     SingleFunctionArgs value) {
   final errors = <SingleFunctionArgsField, List<ValidaError>>{};
 
-  errors[SingleFunctionArgsField.global] = [
+  errors[SingleFunctionArgsField.$global] = [
     ..._customValidateSingleFunction(value),
   ];
   errors[SingleFunctionArgsField.name] = [

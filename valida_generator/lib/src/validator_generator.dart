@@ -71,7 +71,7 @@ enum ${className}Field {
         return '${e.key},';
       }).join()}
   ${visitor.fieldsWithValidate.map((e) => '${e.name},').join()}
-  ${hasGlobalFunctionValidators ? 'global,' : ''}
+  ${hasGlobalFunctionValidators ? _globalFieldIdentifier() : ''}
 }
 
 class ${className}ValidationFields {
@@ -105,7 +105,7 @@ class ${className}Validation extends Validation<${className}, ${className}Field>
     Object? _getProperty(String property) => spec.getField(value, property);
 
     final errors = <${className}Field, List<ValidaError>>{
-      ${hasGlobalFunctionValidators ? 'if (spec.globalValidate != null) ${className}Field.global: spec.globalValidate!(value),' : ''}
+      ${hasGlobalFunctionValidators ? 'if (spec.globalValidate != null) ${className}Field.${_globalFieldIdentifier()}: spec.globalValidate!(value),' : ''}
       ...spec.fieldsMap.map(
         (key, field) => MapEntry(
           key,
@@ -183,7 +183,7 @@ ${className}Validation ${_functionValidateName(className!)}(${className} value) 
         errors[${className}Field.${e.name}] = [if (_${e.name}Validation != null) _${e.name}Validation];
         ''';
       }).join()}
-  ${!hasGlobalFunctionValidators ? '' : 'errors[${className}Field.global] = ${_globalFunctionValidation(annotationValue, visitor.validateFunctions)};'}
+  ${!hasGlobalFunctionValidators ? '' : 'errors[${className}Field.${_globalFieldIdentifier()}] = ${_globalFunctionValidation(annotationValue, visitor.validateFunctions)};'}
   ${visitor.fields.entries.map((e) {
         final isNullable = e.value.element.type.nullabilitySuffix ==
             NullabilitySuffix.question;
@@ -239,6 +239,8 @@ String _globalFunctionValidation(
   ${annotationValue.customValidateName == null ? '' : '...${annotationValue.customValidateName}(value),'}
 ]''';
 }
+
+String _globalFieldIdentifier() => '\$global';
 
 String getSourceCodeAnnotation(BuildStep buildStep, ElementAnnotation e) {
   final s = e as ElementAnnotationImpl;
