@@ -138,7 +138,7 @@ int singleFunction(
 int _singleFunction2(
   @ValidaString(isLowercase: true, isAlpha: true) String name, {
   @ValidaString(isUppercase: true, isAlpha: true) String lastName = 'NONE',
-  @ValidaList(minLength: 1) required List nonEmptyList,
+  @ValidaList<Object>(minLength: 1) required List<Object> nonEmptyList,
 }) {
   final validated = _SingleFunction2Args(
     name,

@@ -522,7 +522,7 @@ SingleFunctionArgsValidation validateSingleFunctionArgs(
 /// The arguments for [_singleFunction2].
 class _SingleFunction2Args with ToJson {
   final String name;
-  final List<dynamic> nonEmptyList;
+  final List<Object> nonEmptyList;
   final String lastName;
 
   /// The arguments for [_singleFunction2].
@@ -628,7 +628,7 @@ class _SingleFunction2ArgsValidation
           ValidaString(isLowercase: true, isAlpha: true),
       _SingleFunction2ArgsField.lastName:
           ValidaString(isUppercase: true, isAlpha: true),
-      _SingleFunction2ArgsField.nonEmptyList: ValidaList(minLength: 1),
+      _SingleFunction2ArgsField.nonEmptyList: ValidaList<Object>(minLength: 1),
     },
     getField: _getField,
   );
