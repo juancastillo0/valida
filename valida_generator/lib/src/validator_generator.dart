@@ -93,14 +93,52 @@ class ${className}ValidationFields {
 
 class ${className}Validation extends Validation<${className}, ${className}Field> {
   ${className}Validation(this.errorsMap, this.value, this.fields) : super(errorsMap);
-
+  @override
   final Map<${className}Field, List<ValidaError>> errorsMap;
-
+  @override
   final ${className} value;
-
+  @override
   final ${className}ValidationFields fields;
 
-  static const validationSpec = {
+  /// Validates [value] and returns a [${className}Validation] with the errors found as a result
+  static ${className}Validation fromValue(${className} value) {
+    Object? _getProperty(String property) => spec.getField(value, property);
+
+    final errors = <${className}Field, List<ValidaError>>{
+      ${hasGlobalFunctionValidators ? 'if (spec.globalValidate != null) ${className}Field.global: spec.globalValidate!(value),' : ''}
+      ...spec.fieldsMap.map(
+        (key, field) => MapEntry(
+          key,
+          field.validate(key.name, _getProperty),
+        ),
+      )
+    };
+    errors.removeWhere((key, value) => value.isEmpty);
+    return ${className}Validation(errors, value, ${className}ValidationFields(errors));
+  }
+
+  static const spec = ValidaSpec(
+    fieldsMap: {
+      ${visitor.fieldsWithValidate.map(
+        (e) {
+          final annot = const TypeChecker.fromRuntime(ValidaNested)
+              .firstAnnotationOfExact(e.element);
+          final _annot = annot?.extractValue(
+                ValidaNested.fieldsSerde,
+                (map) => ValidaNested<dynamic>.fromJson(map),
+              ) ??
+              const ValidaNested<dynamic>();
+
+          // TODO: use _functionValidateName?
+          final _funcName = _annot.overrideValidationName ??
+              'validate${e.type.getDisplayString(withNullability: false)}';
+
+          return "${className}Field.${e.name}: ValidaNested<${e.type.getDisplayString(withNullability: false)}> "
+              "(omit: ${_annot.omit}, "
+              "customValidate: ${_annot.customValidateName}, "
+              "overrideValidation: $_funcName,),";
+        },
+      ).join()}
     ${visitor.fields.entries.map(
         (e) {
           final value = e.value;
@@ -108,15 +146,20 @@ class ${className}Validation extends Validation<${className}, ${className}Field>
             (element) => const TypeChecker.fromRuntime(ValidaField)
                 .isAssignableFromType(element.computeConstantValue()!.type!),
           );
-          return "'${e.key}': ${getSouceCodeAnnotation(buildStep, annot)},";
+          return "${className}Field.${e.key}: ${getSourceCodeAnnotation(buildStep, annot)},";
         },
       ).join()}
-  };
+    },
+    getField: _getField,
+    ${hasGlobalFunctionValidators ? 'globalValidate: _globalValidate,' : ''}
+  );
 
-  static List<ValidaError> globalValidate($className value) => ${_globalFunctionValidation(annotationValue, visitor.validateFunctions)};
+  static List<ValidaError> _globalValidate($className value) 
+    => ${_globalFunctionValidation(annotationValue, visitor.validateFunctions)};
 
-  static Object? getField(${className} value, String field) {
+  static Object? _getField(${className} value, String field) {
     switch (field) {
+      ${visitor.fieldsWithValidate.map((e) => "case '${e.name}': return value.${e.name};").join()}
       ${visitor.fields.entries.map(
         (e) {
           return "case '${e.key}': return value.${e.key};";
@@ -197,7 +240,7 @@ String _globalFunctionValidation(
 ]''';
 }
 
-String getSouceCodeAnnotation(BuildStep buildStep, ElementAnnotation e) {
+String getSourceCodeAnnotation(BuildStep buildStep, ElementAnnotation e) {
   final s = e as ElementAnnotationImpl;
   return s.annotationAst.toString().substring(1);
 }
@@ -220,7 +263,7 @@ String generateArgsClass(
   int optionalPositionArgs = 0;
   return '''
 /// The arguments for [${element.name}].
-class $className {
+class $className with ToJson {
   ${params.map((e) {
     return '${e.documentationComment == null ? '' : '/// ${e.documentationComment}\n'}'
         'final ${e.type.getDisplayString(withNullability: true)} ${e.name};';
@@ -255,7 +298,7 @@ class $className {
     return validated;
   }
 
-  /// Returns a Map with all fields
+  @override
   Map<String, Object?> toJson() => {
     ${params.map((e) => "'${e.name}': ${e.name},").join()}
   };
