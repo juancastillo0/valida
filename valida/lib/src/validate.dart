@@ -1,3 +1,4 @@
+import 'package:valida/src/models/to_json_mixin.dart';
 import 'package:valida/src/validate_annotations.dart';
 
 export 'models/to_json_mixin.dart';
@@ -5,7 +6,7 @@ export 'validate_annotations.dart';
 
 /// Error generated in the process of
 /// validating a class or field
-class ValidaError {
+class ValidaError with ToJson {
   // TODO: final F fieldId;
 
   /// The name of the field that caused this error
@@ -40,7 +41,21 @@ class ValidaError {
   @override
   String toString() {
     return '$errorCode${validationParam == null ? '' : '(${validationParam})'}:'
-        ' $message. $property${value == null ? '' : ' = $value'}';
+        ' $message. $property${value == null ? '' : ' = $value'}.'
+        '${nestedValidation ?? ''}';
+  }
+
+  @override
+  Map<String, Object?> toJson({bool withValue = false}) {
+    return {
+      'property': property,
+      'errorCode': errorCode,
+      'message': message,
+      if (validationParam != null) 'validationParam': validationParam,
+      if (withValue) 'value': value,
+      if (nestedValidation != null)
+        'nestedValidation': nestedValidation!.toJson(withValue: withValue),
+    };
   }
 
   /// Converts a [validation] into a [ValidaError] if there are errors
@@ -50,7 +65,7 @@ class ValidaError {
             errorCode: 'Valida.nested',
             // ignore: missing_whitespace_between_adjacent_strings
             message: 'Found ${validation.numErrors} error'
-                '{${validation.numErrors > 1 ? 's' : ''} in $property',
+                '${validation.numErrors > 1 ? 's' : ''} in $property',
             property: property,
             value: validation.value,
             nestedValidation: validation,
@@ -68,7 +83,7 @@ class Validated<T> {
 }
 
 /// The result of a validation for [T] with fields of type [F]
-abstract class Validation<T, F> {
+abstract class Validation<T, F> with ToJson {
   /// The result of a validation for [T] with fields of type [F]
   Validation(Map<F, List<ValidaError>> errorsMap)
       : errorsMap = Map.unmodifiable(errorsMap),
@@ -110,14 +125,38 @@ abstract class Validation<T, F> {
   ValidaError? toError({required String property}) {
     return ValidaError.fromNested(property, this);
   }
+
+  @override
+  Map<String, Object?> toJson({bool withValue = false}) {
+    return errorsMap.map(
+      (key, value) => MapEntry(
+        key is Enum ? key.name : key.toString(),
+        value.map((e) => e.toJson(withValue: withValue)).toList(),
+      ),
+    );
+  }
 }
 
 /// An object that can validate a value of type [T]
-class Validator<T, V extends Validation<T, Object>> {
-  final V Function(T) validate;
+abstract class Validator<T, V extends Validation<T, Object>> {
+  /// Executes the validation for [value] and returns the [V] validation.
+  V validate(T value);
 
   /// An object that can validate a value of type [T]
-  const Validator(this.validate);
+  const factory Validator(V Function(T) validate) = _ValidatorValue<T, V>;
+}
+
+class _ValidatorValue<T, V extends Validation<T, Object>>
+    implements Validator<T, V> {
+  final V Function(T) _validate;
+
+  /// An object that can validate a value of type [T]
+  const _ValidatorValue(this._validate);
+
+  @override
+  V validate(T value) {
+    return _validate(value);
+  }
 }
 
 /// The specification of the validation for a given type [T] with field [F]
