@@ -13,7 +13,7 @@ void main() {
       identifier: 'identifier',
     );
 
-    final FormTestValidation validation = validateFormTest(form);
+    final FormTestValidation validation = FormTestValidation.fromValue(form);
     assert(validation is Validation<FormTest, FormTestField>);
     expect(validation.numErrors, validation.allErrors.length);
     expect(validation.hasErrors, true);

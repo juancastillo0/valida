@@ -91,7 +91,7 @@ List<ValidaError> _customValidateStr(String value) {
   ];
 }
 
-@Valida()
+@Valida(enumFields: false)
 class NestedField {
   @ValidaString(isTime: true)
   final String timeStr;

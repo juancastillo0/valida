@@ -123,29 +123,22 @@ class FormTestValidation extends Validation<FormTest, FormTestField> {
   }
 }
 
-enum NestedFieldField {
-  timeStr,
-  dateWith2021Min,
-  optionalDateWithNowMax,
-}
-
 class NestedFieldValidationFields {
   const NestedFieldValidationFields(this.errorsMap);
-  final Map<NestedFieldField, List<ValidaError>> errorsMap;
+  final Map<String, List<ValidaError>> errorsMap;
 
-  List<ValidaError> get timeStr =>
-      errorsMap[NestedFieldField.timeStr] ?? const [];
+  List<ValidaError> get timeStr => errorsMap['timeStr'] ?? const [];
   List<ValidaError> get dateWith2021Min =>
-      errorsMap[NestedFieldField.dateWith2021Min] ?? const [];
+      errorsMap['dateWith2021Min'] ?? const [];
   List<ValidaError> get optionalDateWithNowMax =>
-      errorsMap[NestedFieldField.optionalDateWithNowMax] ?? const [];
+      errorsMap['optionalDateWithNowMax'] ?? const [];
 }
 
-class NestedFieldValidation extends Validation<NestedField, NestedFieldField> {
+class NestedFieldValidation extends Validation<NestedField, String> {
   NestedFieldValidation(this.errorsMap, this.value, this.fields)
       : super(errorsMap);
   @override
-  final Map<NestedFieldField, List<ValidaError>> errorsMap;
+  final Map<String, List<ValidaError>> errorsMap;
   @override
   final NestedField value;
   @override
@@ -155,11 +148,11 @@ class NestedFieldValidation extends Validation<NestedField, NestedFieldField> {
   static NestedFieldValidation fromValue(NestedField value) {
     Object? _getProperty(String property) => spec.getField(value, property);
 
-    final errors = <NestedFieldField, List<ValidaError>>{
+    final errors = <String, List<ValidaError>>{
       ...spec.fieldsMap.map(
         (key, field) => MapEntry(
           key,
-          field.validate(key.name, _getProperty),
+          field.validate(key, _getProperty),
         ),
       )
     };
@@ -170,9 +163,9 @@ class NestedFieldValidation extends Validation<NestedField, NestedFieldField> {
 
   static const spec = ValidaSpec(
     fieldsMap: {
-      NestedFieldField.timeStr: ValidaString(isTime: true),
-      NestedFieldField.dateWith2021Min: ValidaDate(min: '2021-01-01'),
-      NestedFieldField.optionalDateWithNowMax: ValidaDate(max: 'now'),
+      'timeStr': ValidaString(isTime: true),
+      'dateWith2021Min': ValidaDate(min: '2021-01-01'),
+      'optionalDateWithNowMax': ValidaDate(max: 'now'),
     },
     getField: _getField,
   );

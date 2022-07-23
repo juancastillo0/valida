@@ -75,13 +75,15 @@ class ValidatorGenerator extends GeneratorForAnnotation<Valida> {
 
       return '''
 ${element is FunctionElement ? generateArgsClass(className!, element) : ''}
+${enumFields ? '''
 enum $fieldTypeName {
   ${visitor.fields.entries.map((e) {
-        return '${e.key},';
-      }).join()}
+              return '${e.key},';
+            }).join()}
   ${visitor.fieldsWithValidate.map((e) => '${e.name},').join()}
   ${hasGlobalFunctionValidators ? _globalFieldIdentifier() : ''}
-}
+}''' : ''}
+
 
 class ${className}ValidationFields {
   const ${className}ValidationFields(this.errorsMap);
@@ -120,7 +122,7 @@ class ${className}Validation extends Validation<${className}, $fieldTypeName> {
       ...spec.fieldsMap.map(
         (key, field) => MapEntry(
           key,
-          field.validate(key.name, _getProperty),
+          field.validate(${enumFields ? 'key.name' : 'key'}, _getProperty),
         ),
       )
     };
