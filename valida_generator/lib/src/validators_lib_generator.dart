@@ -62,7 +62,7 @@ class Validators {
   };
 
   ${allClasses.map((e) {
-        return 'static const validator${e.name} = Validator(validate${e.name});';
+        return 'static const validator${e.name} = Validator(${e.name}Validation.fromValue);';
       }).join()}
 
   static Validator<T, Validation<T, Object>>? validator<T>() {

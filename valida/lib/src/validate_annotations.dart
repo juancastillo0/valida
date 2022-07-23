@@ -9,18 +9,17 @@ export 'validate_string.dart';
 /// executed over a given class
 ///
 /// if [nullableErrorLists] is true, the error lists for each
-/// field with be nullable
-/// if [constErrors] is true, the errors will be constant values
-/// if [enumFields] is true, the field type will be enums
+/// field will be nullable. Default false.
+/// if [enumFields] is true, the field type will be a
+/// generated enum. Default true.
 class Valida with ToJson implements ValidaCustom<Object?> {
-  /// If true, the error lists for each
-  final bool nullableErrorLists;
+  /// If true, the error lists for each field will be nullable.
+  /// Default false.
+  final bool? nullableErrorLists;
 
-  /// If true, the errors will be constant values
-  final bool constErrors;
-
-  /// If true, the field type will be enums
-  final bool enumFields;
+  /// If true, the field type will be a generated enum.
+  /// Default true.
+  final bool? enumFields;
 
   @override
   final List<ValidaError> Function(Object?)? customValidate;
@@ -31,22 +30,18 @@ class Valida with ToJson implements ValidaCustom<Object?> {
   /// executed over a given class
   ///
   /// if [nullableErrorLists] is true, the error lists for each
-  /// field with be nullable
-  /// if [constErrors] is true, the errors will be constant values
-  /// if [enumFields] is true, the field type will be enums
+  /// field will be nullable. Default false.
+  /// if [enumFields] is true, the field type will be a
+  /// generated enum. Default true.
   const Valida({
-    bool? nullableErrorLists,
-    bool? constErrors,
-    bool? enumFields,
+    this.nullableErrorLists,
+    this.enumFields,
     this.customValidate,
     this.customValidateName,
-  })  : nullableErrorLists = nullableErrorLists ?? false,
-        constErrors = constErrors ?? false,
-        enumFields = enumFields ?? true;
+  });
 
   static const fieldsSerde = {
     'nullableErrorLists': SerdeType.bool,
-    'constErrors': SerdeType.bool,
     'enumFields': SerdeType.bool,
     'customValidate': SerdeType.function,
   };
@@ -55,7 +50,6 @@ class Valida with ToJson implements ValidaCustom<Object?> {
   Map<String, Object?> toJson() {
     return {
       'nullableErrorLists': nullableErrorLists,
-      'constErrors': constErrors,
       'enumFields': enumFields,
       'customValidate': customValidateName,
     };
@@ -64,7 +58,6 @@ class Valida with ToJson implements ValidaCustom<Object?> {
   factory Valida.fromJson(Map<String, Object?> map) {
     return Valida(
       nullableErrorLists: map['nullableErrorLists'] as bool?,
-      constErrors: map['constErrors'] as bool?,
       enumFields: map['enumFields'] as bool?,
       customValidateName: map['customValidate'] as String?,
     );

@@ -14,12 +14,19 @@ import 'package:valida/serde_type.dart';
 import 'package:valida/valida.dart';
 
 class ValidatorGenerator extends GeneratorForAnnotation<Valida> {
+  final BuilderOptions options;
+
+  ValidatorGenerator(this.options);
+
   @override
   FutureOr<String> generateForAnnotatedElement(
     Element element,
     ConstantReader annotation,
     BuildStep buildStep,
   ) {
+    final globalNullableErrorLists =
+        (options.config['nullableErrorLists'] as bool?) ?? false;
+    final globalEnumFields = (options.config['enumFields'] as bool?) ?? true;
     try {
       final ModelVisitor visitor;
       if (element is FunctionElement) {
@@ -53,19 +60,22 @@ class ValidatorGenerator extends GeneratorForAnnotation<Valida> {
         Valida.fieldsSerde,
         (p0) => Valida.fromJson(p0),
       );
-      final nullableErrorLists = annotationValue.nullableErrorLists;
+      final nullableErrorLists =
+          annotationValue.nullableErrorLists ?? globalNullableErrorLists;
+      final enumFields = annotationValue.enumFields ?? globalEnumFields;
       final hasGlobalFunctionValidators =
           visitor.validateFunctions.isNotEmpty ||
               annotationValue.customValidateName != null;
       final className = visitor.className;
 
+      final fieldTypeName = enumFields ? '${className}Field' : 'String';
       String _fieldIdent(String fieldName) {
-        return '${visitor.className}Field.$fieldName';
+        return enumFields ? '$fieldTypeName.$fieldName' : "'$fieldName'";
       }
 
       return '''
 ${element is FunctionElement ? generateArgsClass(className!, element) : ''}
-enum ${className}Field {
+enum $fieldTypeName {
   ${visitor.fields.entries.map((e) {
         return '${e.key},';
       }).join()}
@@ -75,7 +85,7 @@ enum ${className}Field {
 
 class ${className}ValidationFields {
   const ${className}ValidationFields(this.errorsMap);
-  final Map<${className}Field, List<ValidaError>> errorsMap;
+  final Map<$fieldTypeName, List<ValidaError>> errorsMap;
 
   ${visitor.fieldsWithValidate.map((e) {
         final retType =
@@ -84,16 +94,18 @@ class ${className}ValidationFields {
             ' final l = errorsMap[${_fieldIdent(e.name)}];'
             ' return (l != null && l.isNotEmpty) ? l.first.nestedValidation as $retType : null;}';
       }).join()}
-  ${visitor.fields.entries.map((e) {
-        return 'List<ValidaError>${nullableErrorLists ? '?' : ''} get ${e.key} '
-            '=> errorsMap[${_fieldIdent(e.key)}]${nullableErrorLists ? '' : '!'};';
+  ${visitor.fields.entries.map((e) => e.key).followedBy([
+            if (hasGlobalFunctionValidators) _globalFieldIdentifier()
+          ]).map((key) {
+        return 'List<ValidaError>${nullableErrorLists ? '?' : ''} get ${key} '
+            '=> errorsMap[${_fieldIdent(key)}]${nullableErrorLists ? '' : ' ?? const []'};';
       }).join()}
 }
 
-class ${className}Validation extends Validation<${className}, ${className}Field> {
+class ${className}Validation extends Validation<${className}, $fieldTypeName> {
   ${className}Validation(this.errorsMap, this.value, this.fields) : super(errorsMap);
   @override
-  final Map<${className}Field, List<ValidaError>> errorsMap;
+  final Map<$fieldTypeName, List<ValidaError>> errorsMap;
   @override
   final ${className} value;
   @override
@@ -103,8 +115,8 @@ class ${className}Validation extends Validation<${className}, ${className}Field>
   static ${className}Validation fromValue(${className} value) {
     Object? _getProperty(String property) => spec.getField(value, property);
 
-    final errors = <${className}Field, List<ValidaError>>{
-      ${hasGlobalFunctionValidators ? 'if (spec.globalValidate != null) ${className}Field.${_globalFieldIdentifier()}: spec.globalValidate!(value),' : ''}
+    final errors = <$fieldTypeName, List<ValidaError>>{
+      ${hasGlobalFunctionValidators ? 'if (spec.globalValidate != null) ${_fieldIdent(_globalFieldIdentifier())}: spec.globalValidate!(value),' : ''}
       ...spec.fieldsMap.map(
         (key, field) => MapEntry(
           key,
@@ -127,12 +139,11 @@ class ${className}Validation extends Validation<${className}, ${className}Field>
                 (map) => ValidaNested<dynamic>.fromJson(map),
               ) ??
               const ValidaNested<dynamic>();
-
-          // TODO: use _functionValidateName?
+          final typeName = e.type.getDisplayString(withNullability: false);
           final _funcName = _annot.overrideValidationName ??
-              'validate${e.type.getDisplayString(withNullability: false)}';
+              '${typeName}Validation.fromValue';
 
-          return "${className}Field.${e.name}: ValidaNested<${e.type.getDisplayString(withNullability: false)}> "
+          return "${_fieldIdent(e.name)}: ValidaNested<${typeName}> "
               "(omit: ${_annot.omit}, "
               "customValidate: ${_annot.customValidateName}, "
               "overrideValidation: $_funcName,),";
@@ -145,7 +156,7 @@ class ${className}Validation extends Validation<${className}, ${className}Field>
             (element) => const TypeChecker.fromRuntime(ValidaField)
                 .isAssignableFromType(element.computeConstantValue()!.type!),
           );
-          return "${className}Field.${e.key}: ${getSourceCodeAnnotation(annot)},";
+          return "${_fieldIdent(e.key)}: ${getSourceCodeAnnotation(annot)},";
         },
       ).join()}
     },
@@ -168,11 +179,6 @@ class ${className}Validation extends Validation<${className}, ${className}Field>
         throw Exception();
     }
   }
-}
-
-@Deprecated('Use ${className}Validation.fromValue')
-${className}Validation ${_functionValidateName(className!)}(${className} value) {
-  return ${className}Validation.fromValue(value);
 }
 ''';
     } catch (e, s) {
@@ -240,7 +246,7 @@ class $className with ToJson {
   );
 
   /// Validates this arguments for [${element.name}].
-  ${className}Validation validate() => ${_functionValidateName(className)}(this);
+  ${className}Validation validate() => ${className}Validation.fromValue(this);
 
 
   /// Validates this arguments for [${element.name}] and
@@ -277,12 +283,6 @@ class $className with ToJson {
     ${params.length <= 19 ? ',)' : ',])'};
 }
 ''';
-}
-
-String _functionValidateName(String className) {
-  return className.startsWith('_')
-      ? '_validate${className.substring(1)}'
-      : 'validate${className}';
 }
 
 class FunctionVisitor extends SimpleElementVisitor<void> {

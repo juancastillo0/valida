@@ -8,8 +8,9 @@ class Validators {
     NestedField: validatorNestedField,
   };
 
-  static const validatorFormTest = Validator(validateFormTest);
-  static const validatorNestedField = Validator(validateNestedField);
+  static const validatorFormTest = Validator(FormTestValidation.fromValue);
+  static const validatorNestedField =
+      Validator(NestedFieldValidation.fromValue);
 
   static Validator<T, Validation<T, Object>>? validator<T>() {
     final validator = typeMap[T];
