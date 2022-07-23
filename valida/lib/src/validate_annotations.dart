@@ -150,8 +150,7 @@ class ValidaNested<T> extends ValidaField<T> {
   }
 
   @override
-  // TODO: implement variantType
-  ValidaFieldType get variantType => throw UnimplementedError();
+  ValidaFieldType get variantType => ValidaFieldType.nested;
 }
 
 /// The type of value being validated
@@ -163,6 +162,7 @@ enum ValidaFieldType {
   list,
   map,
   set,
+  nested,
 }
 
 ValidaFieldType parseValidaFieldType(String raw) {
@@ -425,6 +425,7 @@ abstract class ValidaField<T> with ToJson implements ValidaCustom<T> {
         'list': SerdeType.nested(ValidaList.fieldsSerde),
         'set': SerdeType.nested(ValidaSet.fieldsSerde),
         'map': SerdeType.nested(ValidaMap.fieldsSerde),
+        'nested': SerdeType.nested(ValidaNested.fieldsSerde),
       },
     );
   }
@@ -437,6 +438,7 @@ abstract class ValidaField<T> with ToJson implements ValidaCustom<T> {
     required _T Function(ValidaList) list,
     required _T Function(ValidaMap) map,
     required _T Function(ValidaSet) set,
+    required _T Function(ValidaNested) nested,
   }) {
     switch (variantType) {
       case ValidaFieldType.string:
@@ -453,6 +455,8 @@ abstract class ValidaField<T> with ToJson implements ValidaCustom<T> {
         return map(this as ValidaMap);
       case ValidaFieldType.set:
         return set(this as ValidaSet);
+      case ValidaFieldType.nested:
+        return nested(this as ValidaNested);
     }
   }
 
@@ -476,6 +480,8 @@ abstract class ValidaField<T> with ToJson implements ValidaCustom<T> {
         return ValidaMap<Object?, Object?>.fromJson(map);
       case ValidaFieldType.set:
         return ValidaSet<Object?>.fromJson(map);
+      case ValidaFieldType.nested:
+        return ValidaNested<Object?>.fromJson(map);
     }
   }
 }
