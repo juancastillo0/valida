@@ -193,7 +193,13 @@ enum ComparisonResult {
   more,
 
   /// When the value was equal to the other
-  equal;
+  equal,
+
+  /// When the value was equal to the other
+  lessEq,
+
+  /// When the value was equal to the other
+  moreEq;
 
   /// Returns the result parsed from and integer.
   /// =0 equal, <0 less and >0 more.
@@ -277,15 +283,24 @@ class ValidaComparison<T extends Comparable<T>> with ToJson {
           final skipped = list.map(_compareCompVal).any((element) {
             allSuccess = allSuccess && element == ComparisonResult.success;
             if (element != ComparisonResult.error) {
-              less = less || element == ComparisonResult.less;
-              more = more || element == ComparisonResult.more;
-              eq = eq || element == ComparisonResult.equal;
+              less = less ||
+                  element == ComparisonResult.less ||
+                  element == ComparisonResult.lessEq;
+              more = more ||
+                  element == ComparisonResult.more ||
+                  element == ComparisonResult.moreEq;
+              eq = eq ||
+                  element == ComparisonResult.equal ||
+                  element == ComparisonResult.lessEq ||
+                  element == ComparisonResult.moreEq;
             } else {
               error = true;
             }
-            return error || (less && more || less && eq || more && eq);
+            return error || (less && more);
           });
           if (skipped) return ComparisonResult.error;
+          if (eq && less) return ComparisonResult.lessEq;
+          if (eq && more) return ComparisonResult.moreEq;
           if (eq) return ComparisonResult.equal;
           if (less) return ComparisonResult.less;
           if (more) return ComparisonResult.more;
@@ -310,6 +325,7 @@ class ValidaComparison<T extends Comparable<T>> with ToJson {
           ComparisonResult.success,
           ComparisonResult.less,
           ComparisonResult.equal,
+          ComparisonResult.lessEq,
         ].contains(_compareCompVal(lessEq!))) {
       yield ValidaError(
         property: property,
@@ -333,6 +349,7 @@ class ValidaComparison<T extends Comparable<T>> with ToJson {
           ComparisonResult.success,
           ComparisonResult.more,
           ComparisonResult.equal,
+          ComparisonResult.moreEq,
         ].contains(_compareCompVal(moreEq!))) {
       yield ValidaError(
         property: property,
@@ -393,7 +410,14 @@ abstract class ValidaField<T> with ToJson implements ValidaCustom<T> {
       name,
       (p) {
         if (p == name) return value;
-        if (getter == null) throw Exception();
+        if (getter == null) {
+          throw Exception(
+            'ValidaField.validateValue should only be used when the'
+            " field does not depend on other properties. If that's the case,"
+            ' you must pass the getter method to retrieve all the'
+            " value's properties.",
+          );
+        }
         return getter(p);
       },
     );
@@ -597,7 +621,7 @@ class ValidaNum extends ValidaField<num> implements ValidaComparable<num> {
       }
 
       errors.addAll(
-        _comp.validate(property, _compare, (p) => getter(p)! as num),
+        _comp.validate(property, _compare, (p) => getter(p) as num?),
       );
     }
     if (min != null && value < min!) {
@@ -714,7 +738,7 @@ class ValidaDuration extends ValidaField<Duration>
       }
 
       errors.addAll(
-        _comp.validate(property, _compare, (p) => getter(p)! as Duration),
+        _comp.validate(property, _compare, (p) => getter(p) as Duration?),
       );
     }
     if (min != null && value < min!) {
@@ -832,7 +856,7 @@ class ValidaDate extends ValidaField<DateTime>
       errors.addAll(
         _comp.validate(property, _compare, (p) {
           final v = getter(p);
-          return v is String ? v : (v! as DateTime).toString();
+          return v is String ? v : (v as DateTime?)?.toString();
         }),
       );
     }
