@@ -171,14 +171,13 @@ class ${className}Validation extends Validation<${className}, $fieldTypeName> {
 
   static Object? _getField(${className} value, String field) {
     switch (field) {
-      ${visitor.fieldsWithValidate.map((e) => "case '${e.name}': return value.${e.name};").join()}
-      ${visitor.fields.entries.map(
-        (e) {
-          return "case '${e.key}': return value.${e.key};";
+      ${visitor.allFieldNames.map(
+        (key) {
+          return "case '$key': return value.$key;";
         },
       ).join()}
       default:
-        throw Exception();
+        throw Exception('Could not find field "\$field" for value \$value.');
     }
   }
 }
@@ -304,6 +303,8 @@ class FunctionVisitor extends SimpleElementVisitor<void> {
 
 class ModelVisitor extends SimpleElementVisitor<void> {
   String? className;
+
+  final allFieldNames = <String>{};
   final fields = <String, _Field>{};
   final validateFunctions = <MethodElement>{};
   final fieldsWithValidate = <FieldDescription>{};
@@ -339,6 +340,8 @@ class ModelVisitor extends SimpleElementVisitor<void> {
   }
 
   dynamic visitFieldOrArgElement(FieldDescription prop) {
+    allFieldNames.add(prop.name);
+
     void _addFields({
       required TypeChecker annotation,
       required Map<String, SerdeType> fieldsSerde,

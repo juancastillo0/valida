@@ -135,6 +135,11 @@ abstract class Validation<T, F> with ToJson {
       ),
     );
   }
+
+  @override
+  String toString() {
+    return '$runtimeType<$T, $F>(numErrors: $numErrors, errors: ${toJson()})';
+  }
 }
 
 /// An object that can validate a value of type [T]
