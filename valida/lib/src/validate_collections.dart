@@ -70,7 +70,7 @@ class ValidaList<T> extends ValidaField<List<T>> with ValidaLength {
   @override
   Map<String, Object?> toJson() {
     return {
-      ValidaField.variantTypeString: variantType.toString(),
+      ValidaField.variantTypeString: variantType.name,
       'minLength': minLength,
       'maxLength': maxLength,
       'each': each?.toJson(),
@@ -158,7 +158,7 @@ class ValidaSet<T> extends ValidaField<Set<T>> with ValidaLength {
   @override
   Map<String, Object?> toJson() {
     return {
-      ValidaField.variantTypeString: variantType.toString(),
+      ValidaField.variantTypeString: variantType.name,
       'minLength': minLength,
       'maxLength': maxLength,
       'each': each?.toJson(),
@@ -251,7 +251,7 @@ class ValidaMap<K, V> extends ValidaField<Map<K, V>> with ValidaLength {
   @override
   Map<String, Object?> toJson() {
     return {
-      ValidaField.variantTypeString: variantType.toString(),
+      ValidaField.variantTypeString: variantType.name,
       'minLength': minLength,
       'maxLength': maxLength,
       'eachKey': eachKey?.toJson(),

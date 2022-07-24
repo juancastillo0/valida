@@ -85,6 +85,9 @@ class ValidaNested<T> extends ValidaField<T> {
   final String? overrideValidationName;
 
   @override
+  ValidaFieldType get variantType => ValidaFieldType.nested;
+
+  @override
   final List<ValidaError> Function(T)? customValidate;
 
   @override
@@ -109,7 +112,7 @@ class ValidaNested<T> extends ValidaField<T> {
   @override
   Map<String, Object?> toJson() {
     return {
-      ValidaField.variantTypeString: variantType.toString(),
+      ValidaField.variantTypeString: variantType.name,
       'omit': omit,
       'customValidate': customValidateName,
       'overrideValidation': overrideValidationName,
@@ -141,9 +144,6 @@ class ValidaNested<T> extends ValidaField<T> {
 
     return errors;
   }
-
-  @override
-  ValidaFieldType get variantType => ValidaFieldType.nested;
 }
 
 /// The type of value being validated
@@ -534,7 +534,7 @@ class ValidaNum extends ValidaField<num> implements ValidaComparable<num> {
   @override
   Map<String, Object?> toJson() {
     return {
-      ValidaField.variantTypeString: variantType.toString(),
+      ValidaField.variantTypeString: variantType.name,
       'isIn': isIn,
       'min': min,
       'max': max,
@@ -667,7 +667,7 @@ class ValidaDuration extends ValidaField<Duration>
   @override
   Map<String, Object?> toJson() {
     return {
-      ValidaField.variantTypeString: variantType.toString(),
+      ValidaField.variantTypeString: variantType.name,
       'min': min?.inMicroseconds,
       'max': max?.inMicroseconds,
       'customValidate': customValidateName,
@@ -780,7 +780,7 @@ class ValidaDate extends ValidaField<DateTime>
   @override
   Map<String, Object?> toJson() {
     return {
-      ValidaField.variantTypeString: variantType.toString(),
+      ValidaField.variantTypeString: variantType.name,
       'min': min,
       'max': max,
       'customValidate': customValidateName,

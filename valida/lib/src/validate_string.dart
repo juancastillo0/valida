@@ -168,7 +168,7 @@ class ValidaString extends ValidaField<String> with ValidaLength {
   @override
   Map<String, Object?> toJson() {
     return {
-      ValidaField.variantTypeString: variantType.toString(),
+      ValidaField.variantTypeString: variantType.name,
       'isIn': isIn,
       'maxLength': maxLength,
       'minLength': minLength,
