@@ -348,13 +348,7 @@ class ModelVisitor extends SimpleElementVisitor<void> {
       required ValidaField Function(Map<String, Object?> map) fromJson,
     }) {
       if (annotation.hasAnnotationOfExact(prop.element)) {
-        final annot = annotation.annotationsOfExact(prop.element).first;
-        final _annot = annot.extractValue(
-          fieldsSerde,
-          (map) => fromJson(map),
-        );
-
-        fields[prop.name] = _Field(prop, _annot);
+        fields[prop.name] = _Field(prop);
       }
     }
 
@@ -523,7 +517,6 @@ extension ConsumeSerdeType on DartObject {
 }
 
 class _Field {
-  const _Field(this.element, this.annotation);
+  const _Field(this.element);
   final FieldDescription element;
-  final ValidaField annotation;
 }

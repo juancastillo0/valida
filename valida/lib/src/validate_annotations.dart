@@ -203,7 +203,7 @@ enum ComparisonResult {
 
   /// Returns the result parsed from and integer.
   /// =0 equal, <0 less and >0 more.
-  static ComparisonResult fromInt(int value) {
+  factory ComparisonResult.fromInt(int value) {
     return value == 0
         ? equal
         : value > 0
@@ -372,11 +372,11 @@ class ValidaComparison<T extends Comparable<T>> with ToJson {
   }
 
   factory ValidaComparison.fromJson(Map<String, Object?> map) {
-    return ValidaComparison<T>(
-      more: map['more'] == null ? null : CompVal.fromJson<T>(map['more']),
-      less: map['less'] == null ? null : CompVal.fromJson<T>(map['less']),
-      moreEq: map['moreEq'] == null ? null : CompVal.fromJson<T>(map['moreEq']),
-      lessEq: map['lessEq'] == null ? null : CompVal.fromJson<T>(map['lessEq']),
+    return ValidaComparison(
+      more: map['more'] == null ? null : CompVal.fromJson(map['more']),
+      less: map['less'] == null ? null : CompVal.fromJson(map['less']),
+      moreEq: map['moreEq'] == null ? null : CompVal.fromJson(map['moreEq']),
+      lessEq: map['lessEq'] == null ? null : CompVal.fromJson(map['lessEq']),
       useCompareTo: map['useCompareTo'] as bool?,
     );
   }
@@ -477,28 +477,29 @@ abstract class ValidaField<T> with ToJson implements ValidaCustom<T> {
     }
   }
 
-  static ValidaField<Object?> fromJson(Map<String, Object?> map) {
+  // TODO: check that this is working
+  factory ValidaField.fromJson(Map<String, Object?> map) {
     final type = parseValidaFieldType(
       (map[ValidaField.variantTypeString] ?? map['runtimeType'] ?? map['type'])!
           as String,
     );
     switch (type) {
       case ValidaFieldType.string:
-        return ValidaString.fromJson(map);
+        return ValidaString.fromJson(map) as ValidaField<T>;
       case ValidaFieldType.num:
-        return ValidaNum.fromJson(map);
+        return ValidaNum.fromJson(map) as ValidaField<T>;
       case ValidaFieldType.date:
-        return ValidaDate.fromJson(map);
+        return ValidaDate.fromJson(map) as ValidaField<T>;
       case ValidaFieldType.duration:
-        return ValidaDuration.fromJson(map);
+        return ValidaDuration.fromJson(map) as ValidaField<T>;
       case ValidaFieldType.list:
-        return ValidaList<Object?>.fromJson(map);
+        return ValidaList<Object?>.fromJson(map) as ValidaField<T>;
       case ValidaFieldType.map:
-        return ValidaMap<Object?, Object?>.fromJson(map);
+        return ValidaMap<Object?, Object?>.fromJson(map) as ValidaField<T>;
       case ValidaFieldType.set:
-        return ValidaSet<Object?>.fromJson(map);
+        return ValidaSet<Object?>.fromJson(map) as ValidaField<T>;
       case ValidaFieldType.nested:
-        return ValidaNested<Object?>.fromJson(map);
+        return ValidaNested<Object?>.fromJson(map) as ValidaField<T>;
     }
   }
 }

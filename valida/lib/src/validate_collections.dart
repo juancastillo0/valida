@@ -83,8 +83,7 @@ class ValidaList<T> extends ValidaField<List<T>> with ValidaLength {
       maxLength: map['maxLength'] as int?,
       each: map['each'] == null
           ? null
-          : (ValidaField.fromJson(map['each']! as Map<String, Object?>)
-              as ValidaField<T>),
+          : ValidaField.fromJson(map['each']! as Map<String, Object?>),
       customValidateName: map['customValidate'] as String?,
     );
   }
@@ -172,8 +171,7 @@ class ValidaSet<T> extends ValidaField<Set<T>> with ValidaLength {
       maxLength: map['maxLength'] as int?,
       each: map['each'] == null
           ? null
-          : (ValidaField.fromJson(map['each']! as Map<String, Object?>)
-              as ValidaField<T>),
+          : ValidaField.fromJson(map['each']! as Map<String, Object?>),
       customValidateName: map['customValidate'] as String?,
     );
   }
@@ -266,12 +264,10 @@ class ValidaMap<K, V> extends ValidaField<Map<K, V>> with ValidaLength {
       maxLength: map['maxLength'] as int?,
       eachKey: map['eachKey'] == null
           ? null
-          : (ValidaField.fromJson(map['eachKey']! as Map<String, Object?>)
-              as ValidaField<K>),
+          : ValidaField.fromJson(map['eachKey']! as Map<String, Object?>),
       eachValue: map['eachValue'] == null
           ? null
-          : (ValidaField.fromJson(map['eachValue']! as Map<String, Object?>)
-              as ValidaField<V>),
+          : ValidaField.fromJson(map['eachValue']! as Map<String, Object?>),
       customValidateName: map['customValidate'] as String?,
     );
   }

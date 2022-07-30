@@ -118,7 +118,7 @@ abstract class CompVal<T extends Comparable<T>> with ToJson {
   /// The type of CompValue that this is
   TypeCompVal get variantType;
 
-  static CompVal<T> fromJson<T extends Comparable<T>>(Object? _map) {
+  factory CompVal.fromJson(Object? _map) {
     final Map<String, Object?> map;
     if (_map is CompVal<T>) {
       return _map;
@@ -130,11 +130,11 @@ abstract class CompVal<T extends Comparable<T>> with ToJson {
 
     switch (map['variantType']) {
       case 'ref':
-        return CompValueRef.fromJson<T>(map);
+        return CompValueRef.fromJson(map);
       case 'single':
-        return CompValueSingle.fromJson<T>(map);
+        return CompValueSingle.fromJson(map);
       case 'list':
-        return CompValueList.fromJson<T>(map);
+        return CompValueList.fromJson(map);
       default:
         throw Exception('Invalid discriminator for '
             'CompVal<T extends Comparable<T>>.fromJson '
@@ -165,7 +165,7 @@ class TypeCompVal {
     TypeCompVal.list,
   ];
 
-  static TypeCompVal fromJson(Object? json) {
+  factory TypeCompVal.fromJson(Object? json) {
     if (json == null) {
       throw Error();
     }
@@ -251,7 +251,7 @@ class CompValueRef<T extends Comparable<T>> extends CompVal<T> {
   // ignore: avoid_field_initializers_in_const_classes
   final TypeCompVal variantType = TypeCompVal.ref;
 
-  static CompValueRef<T> fromJson<T extends Comparable<T>>(Object? _map) {
+  factory CompValueRef.fromJson(Object? _map) {
     final Map<String, Object?> map;
     if (_map is CompValueRef<T>) {
       return _map;
@@ -303,7 +303,7 @@ class CompValueSingle<T extends Comparable<T>> extends CompVal<T> {
     return '$value';
   }
 
-  static CompValueSingle<T> fromJson<T extends Comparable<T>>(Object? _map) {
+  factory CompValueSingle.fromJson(Object? _map) {
     final Map<String, Object?> map;
     if (_map is CompValueSingle<T>) {
       return _map;
@@ -312,17 +312,36 @@ class CompValueSingle<T extends Comparable<T>> extends CompVal<T> {
     } else {
       map = (_map! as Map).cast();
     }
+    final value = map['value']!;
+    final T v;
+    if (value is T) {
+      v = value;
+    } else if (T == Duration) {
+      v = Duration(microseconds: value as int) as T;
+    } else if (T == DateTime) {
+      v = DateTime.parse(value as String) as T;
+    } else if (T == BigInt) {
+      v = BigInt.parse(value as String) as T;
+    } else {
+      throw Exception('CompValueSingle$T.fromJson($map) invalid input.');
+    }
 
-    return CompValueSingle<T>(
-      map['value']! as T,
-    );
+    return CompValueSingle<T>(v);
   }
 
   @override
   Map<String, Object?> toJson() {
+    Object v = value;
+    if (v is Duration) {
+      v = v.inMicroseconds;
+    } else if (v is DateTime) {
+      v = v.toIso8601String();
+    } else if (v is BigInt) {
+      v = v.toString();
+    }
     return {
       'variantType': 'single',
-      'value': value,
+      'value': v,
     };
   }
 
@@ -347,7 +366,7 @@ class CompValueList<T extends Comparable<T>> extends CompVal<T> {
     return '[${values.join(' , ')}]';
   }
 
-  static CompValueList<T> fromJson<T extends Comparable<T>>(Object? _map) {
+  factory CompValueList.fromJson(Object? _map) {
     final Map<String, Object?> map;
     if (_map is CompValueList<T>) {
       return _map;
@@ -359,7 +378,7 @@ class CompValueList<T extends Comparable<T>> extends CompVal<T> {
 
     return CompValueList<T>(
       (map['values']! as List)
-          .map((Object? e) => CompVal.fromJson<T>(e))
+          .map((Object? e) => CompVal<T>.fromJson(e))
           .toList()
           .cast(),
     );
