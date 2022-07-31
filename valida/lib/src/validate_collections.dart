@@ -56,6 +56,8 @@ class ValidaList<T> extends ValidaField<List<T>> with ValidaLength {
   final List<ValidaError> Function(List<T>)? customValidate;
   @override
   final String? customValidateName;
+  @override
+  final String? description;
 
   /// Specification of the validation that should be
   /// executed over a given [List]
@@ -65,6 +67,7 @@ class ValidaList<T> extends ValidaField<List<T>> with ValidaLength {
     this.each,
     this.customValidate,
     this.customValidateName,
+    this.description,
   });
 
   @override
@@ -74,6 +77,7 @@ class ValidaList<T> extends ValidaField<List<T>> with ValidaLength {
       'minLength': minLength,
       'maxLength': maxLength,
       'each': each?.toJson(),
+      'description': description,
     };
   }
 
@@ -85,6 +89,7 @@ class ValidaList<T> extends ValidaField<List<T>> with ValidaLength {
           ? null
           : ValidaField.fromJson(map['each']! as Map<String, Object?>),
       customValidateName: map['customValidate'] as String?,
+      description: map['description'] as String?,
     );
   }
 
@@ -93,6 +98,7 @@ class ValidaList<T> extends ValidaField<List<T>> with ValidaLength {
     'maxLength': SerdeType.int,
     'each': ValidaField.fieldsSerde,
     'customValidate': SerdeType.function,
+    'description': SerdeType.str,
   };
 
   @override
@@ -143,6 +149,8 @@ class ValidaSet<T> extends ValidaField<Set<T>> with ValidaLength {
   final List<ValidaError> Function(Set<T>)? customValidate;
   @override
   final String? customValidateName;
+  @override
+  final String? description;
 
   /// Specification of the validation that should be
   /// executed over a given [Set]
@@ -152,6 +160,7 @@ class ValidaSet<T> extends ValidaField<Set<T>> with ValidaLength {
     this.each,
     this.customValidate,
     this.customValidateName,
+    this.description,
   });
 
   @override
@@ -162,6 +171,7 @@ class ValidaSet<T> extends ValidaField<Set<T>> with ValidaLength {
       'maxLength': maxLength,
       'each': each?.toJson(),
       'customValidate': customValidateName,
+      'description': description,
     };
   }
 
@@ -173,6 +183,7 @@ class ValidaSet<T> extends ValidaField<Set<T>> with ValidaLength {
           ? null
           : ValidaField.fromJson(map['each']! as Map<String, Object?>),
       customValidateName: map['customValidate'] as String?,
+      description: map['description'] as String?,
     );
   }
 
@@ -181,6 +192,7 @@ class ValidaSet<T> extends ValidaField<Set<T>> with ValidaLength {
     'maxLength': SerdeType.int,
     'each': ValidaField.fieldsSerde,
     'customValidate': SerdeType.function,
+    'description': SerdeType.str,
   };
 
   @override
@@ -234,6 +246,8 @@ class ValidaMap<K, V> extends ValidaField<Map<K, V>> with ValidaLength {
   final List<ValidaError> Function(Map<K, V>)? customValidate;
   @override
   final String? customValidateName;
+  @override
+  final String? description;
 
   /// Specification of the validation that should be
   /// executed over a given [Map]
@@ -244,6 +258,7 @@ class ValidaMap<K, V> extends ValidaField<Map<K, V>> with ValidaLength {
     this.eachValue,
     this.customValidate,
     this.customValidateName,
+    this.description,
   });
 
   @override
@@ -255,6 +270,7 @@ class ValidaMap<K, V> extends ValidaField<Map<K, V>> with ValidaLength {
       'eachKey': eachKey?.toJson(),
       'eachValue': eachValue?.toJson(),
       'customValidate': customValidateName,
+      'description': description,
     };
   }
 
@@ -269,6 +285,7 @@ class ValidaMap<K, V> extends ValidaField<Map<K, V>> with ValidaLength {
           ? null
           : ValidaField.fromJson(map['eachValue']! as Map<String, Object?>),
       customValidateName: map['customValidate'] as String?,
+      description: map['description'] as String?,
     );
   }
 
@@ -278,6 +295,7 @@ class ValidaMap<K, V> extends ValidaField<Map<K, V>> with ValidaLength {
     'eachKey': ValidaField.fieldsSerde,
     'eachValue': ValidaField.fieldsSerde,
     'customValidate': SerdeType.function,
+    'description': SerdeType.str,
   };
 
   @override

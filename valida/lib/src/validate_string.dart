@@ -123,6 +123,8 @@ class ValidaString extends ValidaField<String> with ValidaLength {
   final List<ValidaError> Function(String)? customValidate;
   @override
   final String? customValidateName;
+  @override
+  final String? description;
 
   /// Specification of the validation that should be
   /// executed over a given string
@@ -163,6 +165,7 @@ class ValidaString extends ValidaField<String> with ValidaLength {
     //
     this.customValidate,
     this.customValidateName,
+    this.description,
   });
 
   @override
@@ -202,6 +205,7 @@ class ValidaString extends ValidaField<String> with ValidaLength {
       'isFloat': isFloat,
       'isISBN': _toEnumString(isISBN),
       'isIP': _toEnumString(isIP),
+      'description': description,
     }..removeWhere((key, value) => value == null);
   }
 
@@ -247,6 +251,7 @@ class ValidaString extends ValidaField<String> with ValidaLength {
       isIP: map['isIP'] is IPVersion
           ? map['isIP']! as IPVersion
           : _parseEnum(map['isIP'] as String?, IPVersion.values),
+      description: map['description'] as String?,
     );
   }
 
@@ -284,6 +289,7 @@ class ValidaString extends ValidaField<String> with ValidaLength {
     'isFloat': SerdeType.bool,
     'isISBN': SerdeType.enumV(ISBNVersion.values),
     'isIP': SerdeType.enumV(IPVersion.values),
+    'description': SerdeType.str,
   };
 
   @override

@@ -77,7 +77,9 @@ class FormTestValidation extends Validation<FormTest, FormTestField> {
           minLength: 15,
           maxLength: 50,
           matches: r'^[a-zA-Z]+$',
-          customValidate: _customValidateStr),
+          customValidate: _customValidateStr,
+          description: 'should have between 15 and 50 bytes, only letters'
+              " and cannot be 'WrongValue'"),
       FormTestField.shortStr: ValidaString(maxLength: 20, contains: '@'),
       FormTestField.positiveInt: ValidaNum(
           isInt: true, min: 0, customValidate: FormTest._customValidateNum),
@@ -103,8 +105,6 @@ class FormTestValidation extends Validation<FormTest, FormTestField> {
 
   static Object? _getField(FormTest value, String field) {
     switch (field) {
-      case 'nested':
-        return value.nested;
       case 'longStr':
         return value.longStr;
       case 'shortStr':
@@ -117,8 +117,14 @@ class FormTestValidation extends Validation<FormTest, FormTestField> {
         return value.nonEmptyList;
       case 'identifier':
         return value.identifier;
+      case 'nested':
+        return value.nested;
+      case 'hashCode':
+        return value.hashCode;
+      case 'runtimeType':
+        return value.runtimeType;
       default:
-        throw Exception();
+        throw Exception('Could not find field "$field" for value $value.');
     }
   }
 }
@@ -180,8 +186,12 @@ class NestedFieldValidation extends Validation<NestedField, String> {
         return value.dateWith2021Min;
       case 'optionalDateWithNowMax':
         return value.optionalDateWithNowMax;
+      case 'hashCode':
+        return value.hashCode;
+      case 'runtimeType':
+        return value.runtimeType;
       default:
-        throw Exception();
+        throw Exception('Could not find field "$field" for value $value.');
     }
   }
 }
@@ -310,7 +320,7 @@ class SingleFunctionArgsValidation
       case 'lastName':
         return value.lastName;
       default:
-        throw Exception();
+        throw Exception('Could not find field "$field" for value $value.');
     }
   }
 }
@@ -441,7 +451,7 @@ class _SingleFunction2ArgsValidation
       case 'nonEmptyList':
         return value.nonEmptyList;
       default:
-        throw Exception();
+        throw Exception('Could not find field "$field" for value $value.');
     }
   }
 }

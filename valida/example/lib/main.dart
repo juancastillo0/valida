@@ -9,7 +9,7 @@ part 'main.g.dart';
 
 @Valida(nullableErrorLists: true, customValidate: FormTest._customValidate)
 class FormTest {
-  static List<ValidaError> _customValidate(Object? value) {
+  static List<ValidaError> _customValidate(FormTest value) {
     return [];
   }
 
@@ -18,6 +18,8 @@ class FormTest {
     maxLength: 50,
     matches: r'^[a-zA-Z]+$',
     customValidate: _customValidateStr,
+    description: 'should have between 15 and 50 bytes, only letters'
+        " and cannot be 'WrongValue'",
   )
   final String longStr;
 
@@ -102,13 +104,12 @@ class NestedField {
   @ValidaDate(max: 'now')
   final DateTime? optionalDateWithNowMax;
 
-  NestedField({
+  const NestedField({
     required this.timeStr,
     required this.dateWith2021Min,
     required this.optionalDateWithNowMax,
   });
 }
-
 
 List<ValidaError> _customValidateSingleFunction(Object? _args) {
   final args = _args! as SingleFunctionArgs;

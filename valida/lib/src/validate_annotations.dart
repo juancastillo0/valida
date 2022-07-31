@@ -25,6 +25,8 @@ class Valida<T> with ToJson implements ValidaCustom<T> {
   final List<ValidaError> Function(T)? customValidate;
   @override
   final String? customValidateName;
+  @override
+  final String? description;
 
   /// Specification of the validation that should be
   /// executed over a given class
@@ -38,6 +40,7 @@ class Valida<T> with ToJson implements ValidaCustom<T> {
     this.enumFields,
     this.customValidate,
     this.customValidateName,
+    this.description,
   });
 
   static const fieldsSerde = {
@@ -52,6 +55,7 @@ class Valida<T> with ToJson implements ValidaCustom<T> {
       'nullableErrorLists': nullableErrorLists,
       'enumFields': enumFields,
       'customValidate': customValidateName,
+      'description': description,
     };
   }
 
@@ -60,6 +64,7 @@ class Valida<T> with ToJson implements ValidaCustom<T> {
       nullableErrorLists: map['nullableErrorLists'] as bool?,
       enumFields: map['enumFields'] as bool?,
       customValidateName: map['customValidate'] as String?,
+      description: map['description'] as String?,
     );
   }
 }
@@ -92,6 +97,8 @@ class ValidaNested<T> extends ValidaField<T> {
 
   @override
   final String? customValidateName;
+  @override
+  final String? description;
 
   /// Annotation for specifying de validation for a nested field. A nested field
   /// is of a class that has [Valida] annotation.
@@ -101,12 +108,14 @@ class ValidaNested<T> extends ValidaField<T> {
     this.overrideValidationName,
     this.customValidate,
     this.customValidateName,
+    this.description,
   });
 
   static const fieldsSerde = {
     'omit': SerdeType.bool,
     'customValidate': SerdeType.function,
     'overrideValidation': SerdeType.function,
+    'description': SerdeType.str,
   };
 
   @override
@@ -116,6 +125,7 @@ class ValidaNested<T> extends ValidaField<T> {
       'omit': omit,
       'customValidate': customValidateName,
       'overrideValidation': overrideValidationName,
+      'description': description,
     };
   }
 
@@ -124,6 +134,7 @@ class ValidaNested<T> extends ValidaField<T> {
       omit: json['omit'] as bool?,
       customValidateName: json['customValidate'] as String?,
       overrideValidationName: json['overrideValidation'] as String?,
+      description: json['description'] as String?,
     );
   }
 
@@ -176,6 +187,9 @@ abstract class ValidaCustom<T> {
   /// This value should not be used directly,
   /// since it is used for code generation
   String? get customValidateName;
+
+  /// A description of the validation performed.
+  String? get description;
 }
 
 /// A result of a comparison
@@ -532,6 +546,8 @@ class ValidaNum extends ValidaField<num> implements ValidaComparable<num> {
   final List<ValidaError> Function(num)? customValidate;
   @override
   final String? customValidateName;
+  @override
+  final String? description;
 
   /// Specification of the validation that should be
   /// executed over a given [num]
@@ -544,6 +560,7 @@ class ValidaNum extends ValidaField<num> implements ValidaComparable<num> {
     this.customValidate,
     this.customValidateName,
     this.comp,
+    this.description,
   });
 
   static const fieldsSerde = {
@@ -554,6 +571,7 @@ class ValidaNum extends ValidaField<num> implements ValidaComparable<num> {
     'isDivisibleBy': SerdeType.num,
     'customValidate': SerdeType.function,
     'comp': ValidaComparison.fieldsSerde,
+    'description': SerdeType.str,
   };
 
   @override
@@ -567,6 +585,7 @@ class ValidaNum extends ValidaField<num> implements ValidaComparable<num> {
       'isDivisibleBy': isDivisibleBy,
       'customValidate': customValidateName,
       'comp': comp?.toJson(),
+      'description': description,
     };
   }
 
@@ -581,6 +600,7 @@ class ValidaNum extends ValidaField<num> implements ValidaComparable<num> {
       comp: map['comp'] == null
           ? null
           : ValidaComparison.fromJson(map['comp']! as Map<String, Object?>),
+      description: map['description'] as String?,
     );
   }
 
@@ -671,6 +691,8 @@ class ValidaDuration extends ValidaField<Duration>
 
   @override
   final ValidaComparison<Duration>? comp;
+  @override
+  final String? description;
 
   /// Specification of the validation that should be
   /// executed over a given [Duration]
@@ -680,6 +702,7 @@ class ValidaDuration extends ValidaField<Duration>
     this.customValidate,
     this.customValidateName,
     this.comp,
+    this.description,
   });
 
   static const fieldsSerde = {
@@ -687,6 +710,7 @@ class ValidaDuration extends ValidaField<Duration>
     'max': SerdeType.duration,
     'customValidate': SerdeType.function,
     'comp': ValidaComparison.fieldsSerde,
+    'description': SerdeType.str,
   };
 
   @override
@@ -697,6 +721,7 @@ class ValidaDuration extends ValidaField<Duration>
       'max': max?.inMicroseconds,
       'customValidate': customValidateName,
       'comp': comp?.toJson(),
+      'description': description,
     };
   }
 
@@ -712,6 +737,7 @@ class ValidaDuration extends ValidaField<Duration>
       comp: map['comp'] == null
           ? null
           : ValidaComparison.fromJson(map['comp']! as Map<String, Object?>),
+      description: map['description'] as String?,
     );
   }
 
@@ -781,6 +807,8 @@ class ValidaDate extends ValidaField<DateTime>
   final List<ValidaError> Function(DateTime)? customValidate;
   @override
   final String? customValidateName;
+  @override
+  final String? description;
 
   @override
   final ValidaComparison<String>? comp;
@@ -793,6 +821,7 @@ class ValidaDate extends ValidaField<DateTime>
     this.customValidate,
     this.customValidateName,
     this.comp,
+    this.description,
   });
 
   static const fieldsSerde = {
@@ -800,6 +829,7 @@ class ValidaDate extends ValidaField<DateTime>
     'max': SerdeType.str,
     'customValidate': SerdeType.function,
     'comp': ValidaComparison.fieldsSerde,
+    'description': SerdeType.str,
   };
 
   @override
@@ -810,6 +840,7 @@ class ValidaDate extends ValidaField<DateTime>
       'max': max,
       'customValidate': customValidateName,
       'comp': comp?.toJson(),
+      'description': description,
     };
   }
 
@@ -821,6 +852,7 @@ class ValidaDate extends ValidaField<DateTime>
       comp: map['comp'] == null
           ? null
           : ValidaComparison.fromJson(map['comp']! as Map<String, Object?>),
+      description: map['description'] as String?,
     );
   }
 
