@@ -21,6 +21,10 @@ class Valida<T> with ToJson implements ValidaCustom<T> {
   /// Default true.
   final bool? enumFields;
 
+  /// Returns value that can retrieve validators from a generic type
+  /// If using code generation, it will be generated as `Validators.instance`.
+  final GenericValidator Function()? genericValidator;
+
   @override
   final List<ValidaError> Function(T)? customValidate;
   @override
@@ -41,12 +45,14 @@ class Valida<T> with ToJson implements ValidaCustom<T> {
     this.customValidate,
     this.customValidateName,
     this.description,
+    this.genericValidator,
   });
 
   static const fieldsSerde = {
     'nullableErrorLists': SerdeType.bool,
     'enumFields': SerdeType.bool,
     'customValidate': SerdeType.function,
+    'description': SerdeType.str,
   };
 
   @override
@@ -83,7 +89,7 @@ class ValidaNested<T> extends ValidaField<T> {
 
   /// A function that executes the validation.
   /// By default, the generated function will be used
-  final Validation Function(T value)? overrideValidation;
+  final Validation? Function(T value)? overrideValidation;
 
   /// The name of the function used for validation. This value should not
   /// be used directly, since it is used for code generation
@@ -148,7 +154,7 @@ class ValidaNested<T> extends ValidaField<T> {
     if (omit == true || value == null) return errors;
 
     if (overrideValidation != null) {
-      final error = overrideValidation!(value).toError(property: property);
+      final error = overrideValidation!(value)?.toError(property: property);
       if (error != null) errors.add(error);
     }
     if (customValidate != null) errors.addAll(customValidate!(value));

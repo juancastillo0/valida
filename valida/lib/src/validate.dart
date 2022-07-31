@@ -142,17 +142,25 @@ abstract class Validation<T, F> with ToJson {
   }
 }
 
+/// Returns the type passed as type argument
+Type _getType<T>() => T;
+
 /// An object that can validate a value of type [T]
 abstract class Validator<T, V extends Validation<T, Object>> {
   /// Executes the validation for [value] and returns the [V] validation.
   V validate(T value);
 
+  /// Returns the generic [T] type
+  Type get modelType => _getType<T>();
+
+  /// Returns the generic [T] nullable type
+  Type get modelNullType => _getType<T?>();
+
   /// An object that can validate a value of type [T]
   const factory Validator(V Function(T) validate) = _ValidatorValue<T, V>;
 }
 
-class _ValidatorValue<T, V extends Validation<T, Object>>
-    implements Validator<T, V> {
+class _ValidatorValue<T, V extends Validation<T, Object>> with Validator<T, V> {
   final V Function(T) _validate;
 
   /// An object that can validate a value of type [T]
@@ -161,6 +169,21 @@ class _ValidatorValue<T, V extends Validation<T, Object>>
   @override
   V validate(T value) {
     return _validate(value);
+  }
+}
+
+/// A value that can retrieve validators from a given type
+mixin GenericValidator {
+  /// Retrieves validators for a given type [T].
+  /// Null if no validator was found.
+  Validator<T, Validation<T, Object>>? validator<T>();
+
+  /// Validate a generic [value] using the validator from [validator].
+  /// Null if no validator was found or if [value] is Null.
+  Validation<T, Object>? validate<T>(T value) {
+    if (value == null) return null;
+    final validator = this.validator<T>();
+    return validator?.validate(value);
   }
 }
 
