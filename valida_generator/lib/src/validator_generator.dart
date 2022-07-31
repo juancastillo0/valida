@@ -80,7 +80,7 @@ enum $fieldTypeName {
   ${visitor.fields.entries.map((e) {
               return '${e.key},';
             }).join()}
-  ${visitor.fieldsWithValidate.map((e) => '${e.name},').join()}
+  ${visitor.fieldsWithValidate.map((e) => '${e.element.name},').join()}
   ${hasGlobalFunctionValidators ? _globalFieldIdentifier() : ''}
 }''' : ''}
 
@@ -89,7 +89,8 @@ class ${className}ValidationFields {
   const ${className}ValidationFields(this.errorsMap);
   final Map<$fieldTypeName, List<ValidaError>> errorsMap;
 
-  ${visitor.fieldsWithValidate.map((e) {
+  ${visitor.fieldsWithValidate.map((_e) {
+        final e = _e.element;
         final retType =
             '${e.type.getDisplayString(withNullability: false)}Validation?';
         return '$retType get ${e.name} {'
@@ -133,7 +134,8 @@ class ${className}Validation extends Validation<${className}, $fieldTypeName> {
   static const spec = ValidaSpec(
     fieldsMap: {
       ${visitor.fieldsWithValidate.map(
-        (e) {
+        (_e) {
+          final e = _e.element;
           final annot = const TypeChecker.fromRuntime(ValidaNested)
               .firstAnnotationOfExact(e.element);
           final _annot = annot?.extractValue(
@@ -154,6 +156,9 @@ class ${className}Validation extends Validation<${className}, $fieldTypeName> {
     ${visitor.fields.entries.map(
         (e) {
           final value = e.value;
+          if (e.value.nestedAnnotation != null) {
+            return "${_fieldIdent(e.key)}: ${e.value.nestedAnnotation},";
+          }
           final annot = value.element.element.metadata.firstWhere(
             (element) => const TypeChecker.fromRuntime(ValidaField)
                 .isAssignableFromType(element.computeConstantValue()!.type!),
@@ -301,13 +306,27 @@ class FunctionVisitor extends SimpleElementVisitor<void> {
   }
 }
 
+bool _isAssignable(Type type, Element element) =>
+    TypeChecker.fromRuntime(type).isAssignableFrom(element);
+
+String _getCleanCollectionType(DartType e) {
+  String gen = '';
+  if (e is InterfaceType && e.typeArguments.isNotEmpty) {
+    gen = '<${e.typeArguments.map(_getCleanCollectionType).join(',')}>';
+  }
+  if (_isAssignable(List, e.element!)) return 'List$gen';
+  if (_isAssignable(Map, e.element!)) return 'Map$gen';
+  if (_isAssignable(Set, e.element!)) return 'Set$gen';
+  return e.getDisplayString(withNullability: false);
+}
+
 class ModelVisitor extends SimpleElementVisitor<void> {
   String? className;
 
   final allFieldNames = <String>{};
   final fields = <String, _Field>{};
   final validateFunctions = <MethodElement>{};
-  final fieldsWithValidate = <FieldDescription>{};
+  final fieldsWithValidate = <_Field>{};
 
   static const _listAnnotation = TypeChecker.fromRuntime(ValidaList);
   static const _stringAnnotation = TypeChecker.fromRuntime(ValidaString);
@@ -352,13 +371,57 @@ class ModelVisitor extends SimpleElementVisitor<void> {
       }
     }
 
+    String? nestedValida(String? wrapper, DartType type) {
+      final elem = type.element!;
+      final fieldType = const TypeChecker.fromRuntime(Valida)
+          .annotationsOfExact(elem)
+          .toList();
+
+      final isList = _isAssignable(List, elem);
+      final isSet = _isAssignable(Set, elem);
+      final isMap = _isAssignable(Map, elem);
+
+      if (fieldType.isNotEmpty) {
+        if (wrapper == null) {
+          fieldsWithValidate.add(_Field(prop));
+        } else {
+          return '${wrapper} ValidaNested(overrideValidation: ${elem.name}Validation.fromValue)';
+        }
+      } else if (type is InterfaceType && (isList || isSet || isMap)) {
+        final typeParameters = type.typeArguments;
+        String generics = '';
+        if (type.getDisplayString(withNullability: false).contains('<')) {
+          generics =
+              '<${typeParameters.map(_getCleanCollectionType).join(',')}>';
+        }
+        final _wrapper = wrapper ?? '';
+
+        // TODO: make sure the generics really map into dart core types
+        if (typeParameters.length == 2 && isMap) {
+          final key = nestedValida('eachKey:', typeParameters.first);
+          final value = nestedValida('eachValue:', typeParameters.last);
+          if (key != null || value != null) {
+            final inner = [key, value].where((e) => e != null).join(',');
+            return '$_wrapper ValidaMap$generics($inner)';
+          }
+        } else if (typeParameters.length == 1 && (isList || isSet)) {
+          final inner = nestedValida('each:', typeParameters.first);
+          if (inner != null) {
+            return '$_wrapper Valida${isSet ? 'Set' : 'List'}$generics($inner)';
+          }
+        }
+      }
+      return null;
+    }
+
     final elementType = prop.type.element;
     if (elementType != null) {
-      final fieldType = const TypeChecker.fromRuntime(Valida)
-          .annotationsOfExact(elementType, throwOnUnresolved: false)
-          .toList();
-      if (fieldType.isNotEmpty) {
-        fieldsWithValidate.add(prop);
+      final collectionNestedAnnotation = nestedValida(null, prop.type);
+      if (collectionNestedAnnotation != null) {
+        fields[prop.name] = _Field(
+          prop,
+          nestedAnnotation: collectionNestedAnnotation,
+        );
       }
     }
 
@@ -517,6 +580,10 @@ extension ConsumeSerdeType on DartObject {
 }
 
 class _Field {
-  const _Field(this.element);
+  const _Field(
+    this.element, {
+    this.nestedAnnotation,
+  });
   final FieldDescription element;
+  final String? nestedAnnotation;
 }

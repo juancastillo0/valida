@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+
 import 'package:valida/valida.dart';
 
 part 'main.g.dart';
@@ -69,6 +71,38 @@ class FormTest {
 
   final NestedField? nested;
 
+  @ValidaList(
+    maxLength: 2,
+    each: ValidaNested(
+      overrideValidation: NestedFieldValidation.fromValue,
+      omit: false,
+      customValidate: FormTest._customValidateNestedListItem,
+    ),
+  )
+  final List<NestedField>? nestedList;
+
+  final Map<String, NestedField?> nestedMap;
+
+  @ValidaSet(
+    each: ValidaNested<NestedField>(omit: true),
+  )
+  final Set<NestedField?> nestedSet;
+
+  final CustomList<NestedField?> nestedNullableList;
+
+  static List<ValidaError> _customValidateNestedListItem(NestedField f) {
+    return [
+      if (f.timeStr == '00:00')
+        ValidaError(
+          errorCode: '00:00',
+          message: "Can't have a time 00:00 for values in list.",
+          property: 'timeStr',
+          value: f,
+        ),
+    ];
+  }
+
+  ///
   const FormTest({
     required this.longStr,
     required this.shortStr,
@@ -77,6 +111,10 @@ class FormTest {
     required this.nonEmptyList,
     required this.identifier,
     this.nested,
+    this.nestedList,
+    this.nestedMap = const {},
+    this.nestedSet = const {},
+    this.nestedNullableList = const CustomList([]),
   });
 }
 
@@ -128,8 +166,9 @@ List<ValidaError> _customValidateSingleFunction(Object? _args) {
 int singleFunction(
   @ValidaString(isLowercase: true, isAlpha: true) String name, [
   @ValidaString(isUppercase: true, isAlpha: true) String lastName = 'NONE',
+  List<Map<String, CustomList<FormTest>>>? nestedList,
 ]) {
-  final validation = SingleFunctionArgs(name, lastName).validate();
+  final validation = SingleFunctionArgs(name, lastName, nestedList).validate();
   if (validation.hasErrors) {
     throw validation;
   }
@@ -141,11 +180,17 @@ int _singleFunction2(
   @ValidaString(isLowercase: true, isAlpha: true) String name, {
   @ValidaString(isUppercase: true, isAlpha: true) String lastName = 'NONE',
   @ValidaList<Object>(minLength: 1) required List<Object> nonEmptyList,
+  Map<NestedField, List>? dynamicList,
 }) {
   final validated = _SingleFunction2Args(
     name,
     lastName: lastName,
     nonEmptyList: nonEmptyList,
+    dynamicList: dynamicList,
   ).validatedOrThrow();
   return name.length + lastName.length + nonEmptyList.length;
+}
+
+class CustomList<T> extends DelegatingList<T> {
+  const CustomList(super.base);
 }

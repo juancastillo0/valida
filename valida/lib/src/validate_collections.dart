@@ -107,7 +107,7 @@ class ValidaList<T> extends ValidaField<List<T>> with ValidaLength {
     Object? Function(String property) getter,
   ) {
     final List<ValidaError> errors = [];
-    final value = getter(property) as List<T>?;
+    final value = getter(property) as List<T?>?;
     if (value == null) return errors;
 
     errors.addAll(validateLength(property, value, value.length));
@@ -115,16 +115,18 @@ class ValidaList<T> extends ValidaField<List<T>> with ValidaLength {
       int i = 0;
       errors.addAll(
         value.expand(
-          (e) => each!.validateValue(
-            e,
-            name: '$property[${i++}]',
-            getter: getter,
-          ),
+          (e) => e is T
+              ? each!.validateValue(
+                  e,
+                  name: '$property[${i++}]',
+                  getter: getter,
+                )
+              : const [],
         ),
       );
     }
     if (customValidate != null) {
-      errors.addAll(customValidate!(value));
+      errors.addAll(customValidate!(value.cast()));
     }
 
     return errors;
@@ -201,7 +203,7 @@ class ValidaSet<T> extends ValidaField<Set<T>> with ValidaLength {
     Object? Function(String property) getter,
   ) {
     final List<ValidaError> errors = [];
-    final value = getter(property) as Set<T>?;
+    final value = getter(property) as Set<T?>?;
     if (value == null) return errors;
 
     errors.addAll(validateLength(property, value, value.length));
@@ -209,16 +211,18 @@ class ValidaSet<T> extends ValidaField<Set<T>> with ValidaLength {
       int i = 0;
       errors.addAll(
         value.expand(
-          (e) => each!.validateValue(
-            e,
-            name: '$property[${i++}]',
-            getter: getter,
-          ),
+          (e) => e is T
+              ? each!.validateValue(
+                  e,
+                  name: '$property[${i++}]',
+                  getter: getter,
+                )
+              : const [],
         ),
       );
     }
     if (customValidate != null) {
-      errors.addAll(customValidate!(value));
+      errors.addAll(customValidate!(value.cast()));
     }
 
     return errors;
@@ -304,34 +308,38 @@ class ValidaMap<K, V> extends ValidaField<Map<K, V>> with ValidaLength {
     Object? Function(String property) getter,
   ) {
     final List<ValidaError> errors = [];
-    final value = getter(property) as Map<K, V>?;
+    final value = getter(property) as Map<K?, V?>?;
     if (value == null) return errors;
 
     errors.addAll(validateLength(property, value, value.length));
     if (eachKey != null) {
       errors.addAll(
         value.keys.expand(
-          (key) => eachKey!.validateValue(
-            key,
-            name: '$property[${key}].key',
-            getter: getter,
-          ),
+          (key) => key is K
+              ? eachKey!.validateValue(
+                  key,
+                  name: '$property[${key}].key',
+                  getter: getter,
+                )
+              : const [],
         ),
       );
     }
     if (eachValue != null) {
       errors.addAll(
         value.entries.expand(
-          (e) => eachValue!.validateValue(
-            e.value,
-            name: '$property[${e.key}].value',
-            getter: getter,
-          ),
+          (e) => e.value is V
+              ? eachValue!.validateValue(
+                  e.value as V,
+                  name: '$property[${e.key}].value',
+                  getter: getter,
+                )
+              : const [],
         ),
       );
     }
     if (customValidate != null) {
-      errors.addAll(customValidate!(value));
+      errors.addAll(customValidate!(value.cast()));
     }
 
     return errors;
