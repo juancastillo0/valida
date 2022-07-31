@@ -12,7 +12,7 @@ export 'validate_string.dart';
 /// field will be nullable. Default false.
 /// if [enumFields] is true, the field type will be a
 /// generated enum. Default true.
-class Valida with ToJson implements ValidaCustom<Object?> {
+class Valida<T> with ToJson implements ValidaCustom<T> {
   /// If true, the error lists for each field will be nullable.
   /// Default false.
   final bool? nullableErrorLists;
@@ -22,7 +22,7 @@ class Valida with ToJson implements ValidaCustom<Object?> {
   final bool? enumFields;
 
   @override
-  final List<ValidaError> Function(Object?)? customValidate;
+  final List<ValidaError> Function(T)? customValidate;
   @override
   final String? customValidateName;
 

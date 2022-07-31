@@ -9,7 +9,7 @@ part 'main.g.dart';
 
 @Valida(nullableErrorLists: true, customValidate: FormTest._customValidate)
 class FormTest {
-  static List<ValidaError> _customValidate(Object? value) {
+  static List<ValidaError> _customValidate(FormTest value) {
     return [];
   }
 

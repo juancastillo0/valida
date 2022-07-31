@@ -58,7 +58,7 @@ class ValidatorGenerator extends GeneratorForAnnotation<Valida> {
 
       final annotationValue = annotation.objectValue.extractValue(
         Valida.fieldsSerde,
-        (p0) => Valida.fromJson(p0),
+        (p0) => Valida<dynamic>.fromJson(p0),
       );
       final nullableErrorLists =
           annotationValue.nullableErrorLists ?? globalNullableErrorLists;
