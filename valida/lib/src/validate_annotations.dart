@@ -1,4 +1,5 @@
 import 'package:valida/serde_type.dart';
+import 'package:valida/src/utils.dart';
 import 'package:valida/src/validate.dart';
 
 export 'models/comp_val.dart';
@@ -684,7 +685,10 @@ class ValidaNum extends ValidaField<num> implements ValidaComparable<num> {
 /// executed over a given [Duration]
 class ValidaDuration extends ValidaField<Duration>
     implements ValidaComparable<Duration> {
+  /// The minimum duration the validated value should be
   final Duration? min;
+
+  /// The maximum duration the validated value should be
   final Duration? max;
 
   @override
@@ -919,34 +923,4 @@ class ValidaDate extends ValidaField<DateTime>
 
     return errors;
   }
-}
-
-// TODO: make private
-
-void Function({
-  required String errorCode,
-  required String message,
-  required Object? validationParam,
-}) addErrorFunc(
-  String property,
-  Object value,
-  List<ValidaError> errors,
-) {
-  void _addError({
-    required String errorCode,
-    required String message,
-    required Object? validationParam,
-  }) {
-    errors.add(
-      ValidaError(
-        property: property,
-        value: value,
-        errorCode: errorCode,
-        message: message,
-        validationParam: validationParam,
-      ),
-    );
-  }
-
-  return _addError;
 }
