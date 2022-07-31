@@ -122,6 +122,8 @@ abstract class Validation<T, F> with ToJson {
   /// The validated value. Null if there were errors
   Validated<T>? get validated => isValid ? Validated._(value) : null;
 
+  /// Return this validation as a [ValidaError].
+  /// Null if there are no errors in the validation.
   ValidaError? toError({required String property}) {
     return ValidaError.fromNested(property, this);
   }
@@ -188,7 +190,7 @@ mixin GenericValidator {
 }
 
 /// The specification of the validation for a given type [T] with field [F]
-class ValidaSpec<T, F> {
+class ValidaSpec<V extends Validation<T, F>, T, F> {
   /// A Map with specification of the validation for each field
   final Map<F, ValidaField> fieldsMap;
 
@@ -196,12 +198,50 @@ class ValidaSpec<T, F> {
   final Object? Function(T value, String field) getField;
 
   /// Validates [value] globally. It is not specific to only one field.
-  final List<ValidaError> Function(T value)? globalValidate;
+  final GlobalValidateFunc<T, F>? globalValidate;
+
+  /// A function that creates a validation instance from the errors
+  /// and the validated value.
+  final V Function(Map<F, List<ValidaError>> errors, T value) validationFactory;
+
+  /// Validates [value] and returns a [V] with the errors found as a result
+  V validate(T value) {
+    Object? _getProperty(String property) => getField(value, property);
+
+    final errors = <F, List<ValidaError>>{
+      if (globalValidate != null)
+        globalValidate!.field: globalValidate!.function(value),
+      ...fieldsMap.map(
+        (key, field) => MapEntry(
+          key,
+          field.validate(key is Enum ? key.name : key.toString(), _getProperty),
+        ),
+      )
+    };
+    errors.removeWhere((key, value) => value.isEmpty);
+    return validationFactory(errors, value);
+  }
 
   /// The specification of the validation for a given type [T] with field [F]
   const ValidaSpec({
     required this.fieldsMap,
     required this.getField,
+    required this.validationFactory,
     this.globalValidate,
+  });
+}
+
+/// A wrapper around the global validation [function].
+class GlobalValidateFunc<T, F> {
+  /// The function that performs the validation
+  final List<ValidaError> Function(T value) function;
+
+  /// The global field identifier
+  final F field;
+
+  /// A wrapper around the global validation [function].
+  const GlobalValidateFunc({
+    required this.function,
+    required this.field,
   });
 }

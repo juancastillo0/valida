@@ -120,7 +120,8 @@ class ${className}ValidationFields {
 }
 
 class ${className}Validation$genericsBound extends Validation<${className}$generics, $fieldTypeName> {
-  ${className}Validation(this.errorsMap, this.value, this.fields) : super(errorsMap);
+  ${className}Validation(this.errorsMap, this.value)
+    : fields = ${className}ValidationFields(errorsMap), super(errorsMap);
   @override
   final Map<$fieldTypeName, List<ValidaError>> errorsMap;
   @override
@@ -129,24 +130,14 @@ class ${className}Validation$genericsBound extends Validation<${className}$gener
   final ${className}ValidationFields fields;
 
   /// Validates [value] and returns a [${className}Validation] with the errors found as a result
-  factory ${className}Validation.fromValue(${className}$generics value) {
-    ${generics.isEmpty ? 'const _spec = spec;' : 'final _spec = spec$generics();'}
-    Object? _getProperty(String property) => _spec.getField(value, property);
+  factory ${className}Validation.fromValue(${className}$generics value) =>
+    ${generics.isEmpty ? 'spec' : 'spec$generics()'}.validate(value);
 
-    final errors = <$fieldTypeName, List<ValidaError>>{
-      ${hasGlobalFunctionValidators ? 'if (_spec.globalValidate != null) ${_fieldIdent(_globalFieldIdentifier())}: _spec.globalValidate!(value),' : ''}
-      ..._spec.fieldsMap.map(
-        (key, field) => MapEntry(
-          key,
-          field.validate(${enumFields ? 'key.name' : 'key'}, _getProperty),
-        ),
-      )
-    };
-    errors.removeWhere((key, value) => value.isEmpty);
-    return ${className}Validation(errors, value, ${className}ValidationFields(errors));
-  }
-
-  static ${generics.isEmpty ? 'const spec =' : 'ValidaSpec<${className}$generics, $fieldTypeName> spec$genericsBound() =>'} ValidaSpec(
+  static ${generics.isEmpty ? 'const spec =' : 'ValidaSpec<${className}Validation$generics, ${className}$generics, $fieldTypeName> spec$genericsBound() =>'} 
+  ValidaSpec(
+    globalValidate: ${hasGlobalFunctionValidators ? 'GlobalValidateFunc(function: _globalValidate, field: ${_fieldIdent(_globalFieldIdentifier())},)' : 'null'},
+    validationFactory: ${className}Validation.new,
+    getField: _getField,
     fieldsMap: {
       ${visitor.fieldsWithValidate.map(
         (_e) {
@@ -168,8 +159,6 @@ class ${className}Validation$genericsBound extends Validation<${className}$gener
         },
       ).join()}
     },
-    getField: _getField,
-    ${hasGlobalFunctionValidators ? 'globalValidate: _globalValidate,' : ''}
   );
 
   static List<ValidaError> _globalValidate$genericsBound($className$generics value) 

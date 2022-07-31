@@ -48,8 +48,9 @@ class FormTestValidationFields {
 }
 
 class FormTestValidation extends Validation<FormTest, FormTestField> {
-  FormTestValidation(this.errorsMap, this.value, this.fields)
-      : super(errorsMap);
+  FormTestValidation(this.errorsMap, this.value)
+      : fields = FormTestValidationFields(errorsMap),
+        super(errorsMap);
   @override
   final Map<FormTestField, List<ValidaError>> errorsMap;
   @override
@@ -58,25 +59,15 @@ class FormTestValidation extends Validation<FormTest, FormTestField> {
   final FormTestValidationFields fields;
 
   /// Validates [value] and returns a [FormTestValidation] with the errors found as a result
-  factory FormTestValidation.fromValue(FormTest value) {
-    const _spec = spec;
-    Object? _getProperty(String property) => _spec.getField(value, property);
-
-    final errors = <FormTestField, List<ValidaError>>{
-      if (_spec.globalValidate != null)
-        FormTestField.$global: _spec.globalValidate!(value),
-      ..._spec.fieldsMap.map(
-        (key, field) => MapEntry(
-          key,
-          field.validate(key.name, _getProperty),
-        ),
-      )
-    };
-    errors.removeWhere((key, value) => value.isEmpty);
-    return FormTestValidation(errors, value, FormTestValidationFields(errors));
-  }
+  factory FormTestValidation.fromValue(FormTest value) => spec.validate(value);
 
   static const spec = ValidaSpec(
+    globalValidate: GlobalValidateFunc(
+      function: _globalValidate,
+      field: FormTestField.$global,
+    ),
+    validationFactory: FormTestValidation.new,
+    getField: _getField,
     fieldsMap: {
       FormTestField.nested: ValidaNested<NestedField>(
         omit: null,
@@ -117,8 +108,6 @@ class FormTestValidation extends Validation<FormTest, FormTestField> {
           each: ValidaNested(
               overrideValidation: NestedFieldValidation.fromValue)),
     },
-    getField: _getField,
-    globalValidate: _globalValidate,
   );
 
   static List<ValidaError> _globalValidate(FormTest value) => [
@@ -183,8 +172,9 @@ class NestedFieldValidationFields {
 }
 
 class NestedFieldValidation extends Validation<NestedField, String> {
-  NestedFieldValidation(this.errorsMap, this.value, this.fields)
-      : super(errorsMap);
+  NestedFieldValidation(this.errorsMap, this.value)
+      : fields = NestedFieldValidationFields(errorsMap),
+        super(errorsMap);
   @override
   final Map<String, List<ValidaError>> errorsMap;
   @override
@@ -193,24 +183,13 @@ class NestedFieldValidation extends Validation<NestedField, String> {
   final NestedFieldValidationFields fields;
 
   /// Validates [value] and returns a [NestedFieldValidation] with the errors found as a result
-  factory NestedFieldValidation.fromValue(NestedField value) {
-    const _spec = spec;
-    Object? _getProperty(String property) => _spec.getField(value, property);
-
-    final errors = <String, List<ValidaError>>{
-      ..._spec.fieldsMap.map(
-        (key, field) => MapEntry(
-          key,
-          field.validate(key, _getProperty),
-        ),
-      )
-    };
-    errors.removeWhere((key, value) => value.isEmpty);
-    return NestedFieldValidation(
-        errors, value, NestedFieldValidationFields(errors));
-  }
+  factory NestedFieldValidation.fromValue(NestedField value) =>
+      spec.validate(value);
 
   static const spec = ValidaSpec(
+    globalValidate: null,
+    validationFactory: NestedFieldValidation.new,
+    getField: _getField,
     fieldsMap: {
       'genericModel': ValidaNested<GenericModel<NestedField, String>>(
         omit: null,
@@ -224,7 +203,6 @@ class NestedFieldValidation extends Validation<NestedField, String> {
           each: ValidaNested(
               overrideValidation: GenericModelValidation.fromValue)),
     },
-    getField: _getField,
   );
 
   static List<ValidaError> _globalValidate(NestedField value) => [];
@@ -270,8 +248,9 @@ class GenericModelValidationFields {
 
 class GenericModelValidation<T, O extends Object>
     extends Validation<GenericModel<T, O>, GenericModelField> {
-  GenericModelValidation(this.errorsMap, this.value, this.fields)
-      : super(errorsMap);
+  GenericModelValidation(this.errorsMap, this.value)
+      : fields = GenericModelValidationFields(errorsMap),
+        super(errorsMap);
   @override
   final Map<GenericModelField, List<ValidaError>> errorsMap;
   @override
@@ -280,25 +259,15 @@ class GenericModelValidation<T, O extends Object>
   final GenericModelValidationFields fields;
 
   /// Validates [value] and returns a [GenericModelValidation] with the errors found as a result
-  factory GenericModelValidation.fromValue(GenericModel<T, O> value) {
-    final _spec = spec<T, O>();
-    Object? _getProperty(String property) => _spec.getField(value, property);
+  factory GenericModelValidation.fromValue(GenericModel<T, O> value) =>
+      spec<T, O>().validate(value);
 
-    final errors = <GenericModelField, List<ValidaError>>{
-      ..._spec.fieldsMap.map(
-        (key, field) => MapEntry(
-          key,
-          field.validate(key.name, _getProperty),
-        ),
-      )
-    };
-    errors.removeWhere((key, value) => value.isEmpty);
-    return GenericModelValidation(
-        errors, value, GenericModelValidationFields(errors));
-  }
-
-  static ValidaSpec<GenericModel<T, O>, GenericModelField>
+  static ValidaSpec<GenericModelValidation<T, O>,
+          GenericModel<T, O>, GenericModelField>
       spec<T, O extends Object>() => ValidaSpec(
+            globalValidate: null,
+            validationFactory: GenericModelValidation.new,
+            getField: _getField,
             fieldsMap: {
               GenericModelField.value: ValidaNested<T>(
                   overrideValidation: Validators.instance().validate),
@@ -307,7 +276,6 @@ class GenericModelValidation<T, O extends Object>
                       overrideValidation: Validators.instance().validate)),
               GenericModelField.params: ValidaString(minLength: 1),
             },
-            getField: _getField,
           );
 
   static List<ValidaError> _globalValidate<T, O extends Object>(
@@ -415,8 +383,9 @@ class SingleFunctionArgsValidationFields {
 
 class SingleFunctionArgsValidation
     extends Validation<SingleFunctionArgs, SingleFunctionArgsField> {
-  SingleFunctionArgsValidation(this.errorsMap, this.value, this.fields)
-      : super(errorsMap);
+  SingleFunctionArgsValidation(this.errorsMap, this.value)
+      : fields = SingleFunctionArgsValidationFields(errorsMap),
+        super(errorsMap);
   @override
   final Map<SingleFunctionArgsField, List<ValidaError>> errorsMap;
   @override
@@ -425,26 +394,16 @@ class SingleFunctionArgsValidation
   final SingleFunctionArgsValidationFields fields;
 
   /// Validates [value] and returns a [SingleFunctionArgsValidation] with the errors found as a result
-  factory SingleFunctionArgsValidation.fromValue(SingleFunctionArgs value) {
-    const _spec = spec;
-    Object? _getProperty(String property) => _spec.getField(value, property);
-
-    final errors = <SingleFunctionArgsField, List<ValidaError>>{
-      if (_spec.globalValidate != null)
-        SingleFunctionArgsField.$global: _spec.globalValidate!(value),
-      ..._spec.fieldsMap.map(
-        (key, field) => MapEntry(
-          key,
-          field.validate(key.name, _getProperty),
-        ),
-      )
-    };
-    errors.removeWhere((key, value) => value.isEmpty);
-    return SingleFunctionArgsValidation(
-        errors, value, SingleFunctionArgsValidationFields(errors));
-  }
+  factory SingleFunctionArgsValidation.fromValue(SingleFunctionArgs value) =>
+      spec.validate(value);
 
   static const spec = ValidaSpec(
+    globalValidate: GlobalValidateFunc(
+      function: _globalValidate,
+      field: SingleFunctionArgsField.$global,
+    ),
+    validationFactory: SingleFunctionArgsValidation.new,
+    getField: _getField,
     fieldsMap: {
       SingleFunctionArgsField.name:
           ValidaString(isLowercase: true, isAlpha: true),
@@ -457,8 +416,6 @@ class SingleFunctionArgsValidation
                       each: ValidaNested(
                           overrideValidation: FormTestValidation.fromValue)))),
     },
-    getField: _getField,
-    globalValidate: _globalValidate,
   );
 
   static List<ValidaError> _globalValidate(SingleFunctionArgs value) => [
@@ -565,8 +522,9 @@ class _SingleFunction2ArgsValidationFields {
 
 class _SingleFunction2ArgsValidation
     extends Validation<_SingleFunction2Args, _SingleFunction2ArgsField> {
-  _SingleFunction2ArgsValidation(this.errorsMap, this.value, this.fields)
-      : super(errorsMap);
+  _SingleFunction2ArgsValidation(this.errorsMap, this.value)
+      : fields = _SingleFunction2ArgsValidationFields(errorsMap),
+        super(errorsMap);
   @override
   final Map<_SingleFunction2ArgsField, List<ValidaError>> errorsMap;
   @override
@@ -575,24 +533,14 @@ class _SingleFunction2ArgsValidation
   final _SingleFunction2ArgsValidationFields fields;
 
   /// Validates [value] and returns a [_SingleFunction2ArgsValidation] with the errors found as a result
-  factory _SingleFunction2ArgsValidation.fromValue(_SingleFunction2Args value) {
-    const _spec = spec;
-    Object? _getProperty(String property) => _spec.getField(value, property);
-
-    final errors = <_SingleFunction2ArgsField, List<ValidaError>>{
-      ..._spec.fieldsMap.map(
-        (key, field) => MapEntry(
-          key,
-          field.validate(key.name, _getProperty),
-        ),
-      )
-    };
-    errors.removeWhere((key, value) => value.isEmpty);
-    return _SingleFunction2ArgsValidation(
-        errors, value, _SingleFunction2ArgsValidationFields(errors));
-  }
+  factory _SingleFunction2ArgsValidation.fromValue(
+          _SingleFunction2Args value) =>
+      spec.validate(value);
 
   static const spec = ValidaSpec(
+    globalValidate: null,
+    validationFactory: _SingleFunction2ArgsValidation.new,
+    getField: _getField,
     fieldsMap: {
       _SingleFunction2ArgsField.name:
           ValidaString(isLowercase: true, isAlpha: true),
@@ -604,7 +552,6 @@ class _SingleFunction2ArgsValidation
               eachKey: ValidaNested(
                   overrideValidation: NestedFieldValidation.fromValue)),
     },
-    getField: _getField,
   );
 
   static List<ValidaError> _globalValidate(_SingleFunction2Args value) => [];
