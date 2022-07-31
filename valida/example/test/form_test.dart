@@ -3,6 +3,20 @@ import 'package:valida_example/main.dart';
 import 'package:test/test.dart';
 
 void main() {
+  final errorJsonDateWith2021Min = {
+    'property': 'dateWith2021Min',
+    'message': 'Should be at a minimum 2021-01-01',
+    'errorCode': 'ValidaDate.min',
+    'validationParam': '2021-01-01',
+  };
+
+  final errorJsonOptionalDateWithNowMax = {
+    'property': 'optionalDateWithNowMax',
+    'message': 'Should be at a maximum now',
+    'errorCode': 'ValidaDate.max',
+    'validationParam': 'now',
+  };
+
   test('validate FormTest', () {
     final form = FormTest(
       longStr: 'long Str',
@@ -40,22 +54,16 @@ void main() {
 
     expect(errorsMap[FormTestField.nested]?.length, 1);
     expect(validation.fields.nested!.fields.optionalDateWithNowMax.length, 1);
-    final errorJson = {
-      'property': 'dateWith2021Min',
-      'message': 'Should be at a minimum 2021-01-01',
-      'errorCode': 'ValidaDate.min',
-      'validationParam': '2021-01-01',
-    };
     expect(
       validation.fields.nested!.fields.dateWith2021Min.map((e) => e.toJson()),
-      [errorJson],
+      [errorJsonDateWith2021Min],
     );
     expect(
       validation.fields.nested!.fields.dateWith2021Min.map(
         (e) => e.toJson(withValue: true),
       ),
       [
-        {...errorJson, 'value': form.nested!.dateWith2021Min}
+        {...errorJsonDateWith2021Min, 'value': form.nested!.dateWith2021Min}
       ],
     );
   });
@@ -72,5 +80,121 @@ void main() {
       'should have between 15 and 50 bytes, only letters'
       " and cannot be 'WrongValue'",
     );
+  });
+
+  test('GenericModel', () {
+    final validation = GenericModelValidation.fromValue(
+      GenericModel<FormTest?, NestedField>(
+        value: null,
+        params: 'dwdw',
+        objects: [
+          NestedField(
+            timeStr: '20:34',
+            dateWith2021Min: DateTime(2020, 03, 03),
+            optionalDateWithNowMax: DateTime(7340, 2, 3),
+          ),
+        ],
+      ),
+    );
+
+    expect(validation.fields.objects.map((e) => e.toJson()), [
+      {
+        'property': 'objects[0]',
+        'errorCode': 'Valida.nested',
+        'message': 'Found 2 errors in objects[0]',
+        'nestedValidation': {
+          'dateWith2021Min': [errorJsonDateWith2021Min],
+          'optionalDateWithNowMax': [errorJsonOptionalDateWithNowMax],
+        },
+      },
+    ]);
+
+    expect(
+      GenericModelValidation.fromValue(
+        GenericModel<FormTest?, NestedField>(
+          value: null,
+          params: '',
+          objects: [],
+        ),
+      ).fields.params.map((e) => e.toJson(withValue: true)),
+      [
+        {
+          'property': 'params',
+          'errorCode': 'ValidaLength.minLength',
+          'message': 'Should have a minimum length of 1',
+          'validationParam': 1,
+          'value': ''
+        }
+      ],
+    );
+
+    final validation2 = GenericModelValidation.fromValue(
+      GenericModel<NestedField, FormTest>(
+        value: NestedField(
+          timeStr: 'notTime',
+          dateWith2021Min: DateTime(2020, 03, 03),
+          optionalDateWithNowMax: DateTime(2010, 2, 3),
+        ),
+        params: 'dwdw',
+        objects: [],
+      ),
+    );
+
+    final validation3 = GenericModelValidation.fromValue(
+      GenericModel<NestedField?, FormTest>(
+        value: NestedField(
+          timeStr: 'notTime',
+          dateWith2021Min: DateTime(2020, 03, 03),
+          optionalDateWithNowMax: DateTime(2010, 2, 3),
+        ),
+        params: 'dwdw',
+        objects: [],
+      ),
+    );
+    expect(validation2.toJson(), {
+      'value': [
+        {
+          'property': 'value',
+          'errorCode': 'Valida.nested',
+          'message': 'Found 2 errors in value',
+          'nestedValidation': {
+            'timeStr': [
+              {
+                'property': 'timeStr',
+                'errorCode': 'ValidaString.isTime',
+                'message': 'Should be a time'
+              }
+            ],
+            'dateWith2021Min': [errorJsonDateWith2021Min],
+          },
+        },
+      ],
+    });
+    expect(validation2.toJson(), validation3.toJson());
+  });
+
+  test('is time', () {
+    bool isTime(String time) {
+      final value = DateTime.tryParse('1970-01-01T$time');
+      print('$time $value');
+      return value != null;
+    }
+
+    isTime('notTime');
+    isTime('10');
+    isTime('01');
+    isTime('10:40');
+    isTime('04:20:23.392');
+    isTime('04:20:61.392');
+    isTime('21:61');
+    isTime('24:61');
+    isTime('00:60:00');
+    isTime('00:00:60');
+    isTime('00:00:59.05');
+    isTime('24:00:00');
+    isTime('24:00');
+
+    isTime('10:40:59 Z');
+    isTime('10:40 -05');
   });
 }

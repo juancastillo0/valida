@@ -13,6 +13,8 @@ import 'package:source_gen/source_gen.dart';
 import 'package:valida/serde_type.dart';
 import 'package:valida/valida.dart';
 
+import 'package:valida_generator/src/generator_utils.dart';
+
 class ValidatorGenerator extends GeneratorForAnnotation<Valida> {
   final BuilderOptions options;
 
@@ -27,23 +29,30 @@ class ValidatorGenerator extends GeneratorForAnnotation<Valida> {
     final globalNullableErrorLists =
         (options.config['nullableErrorLists'] as bool?) ?? false;
     final globalEnumFields = (options.config['enumFields'] as bool?) ?? true;
+    final genericValidator = _getGenericValidator(element);
     try {
       final ModelVisitor visitor;
       if (element is FunctionElement) {
-        final funcVisitor = FunctionVisitor();
+        visitor = ModelVisitor(
+          getFunctionArgsClassName(element),
+          element.typeParameters,
+          genericValidator,
+        );
+        final funcVisitor = FunctionVisitor(visitor);
         element.visitChildren(funcVisitor);
-        visitor = funcVisitor.modelVisitor;
-
-        final firstIndex = element.name.replaceFirstMapped(
-            RegExp('[a-zA-Z0-9]'),
-            (match) =>
-                match.input.substring(match.start, match.end).toUpperCase());
-        visitor.className = '${firstIndex}Args';
       } else {
-        visitor = ModelVisitor();
+        if (element is! ClassElement) {
+          throw 'Annotated element for Valida should be a function or class.'
+              ' Got $element.';
+        }
+        visitor = ModelVisitor(
+          element.name,
+          element.typeParameters,
+          genericValidator,
+        );
         element.visitChildren(visitor);
         final _visited = <Element>{element};
-        ClassElement? elem = element is ClassElement ? element : null;
+        ClassElement? elem = element;
         while (elem?.supertype != null) {
           final currentElem = elem!.supertype!.element;
           if (_visited.contains(currentElem)) {
@@ -66,15 +75,19 @@ class ValidatorGenerator extends GeneratorForAnnotation<Valida> {
       final hasGlobalFunctionValidators =
           visitor.validateFunctions.isNotEmpty ||
               annotationValue.customValidateName != null;
-      final className = visitor.className;
+      String className = visitor.className;
+      final generics = _typeList(visitor.typeParamList, ext: false);
+      final genericsBound = _typeList(visitor.typeParamList, ext: true);
+      final _index = className.indexOf('<');
+      className = _index == -1 ? className : className.substring(0, _index);
 
       final fieldTypeName = enumFields ? '${className}Field' : 'String';
       String _fieldIdent(String fieldName) {
         return enumFields ? '$fieldTypeName.$fieldName' : "'$fieldName'";
       }
 
-      return '''
-${element is FunctionElement ? generateArgsClass(className!, element) : ''}
+      final output = '''
+${element is FunctionElement ? generateArgsClass(className, element) : ''}
 ${enumFields ? '''
 enum $fieldTypeName {
   ${visitor.fields.entries.map((e) {
@@ -91,8 +104,9 @@ class ${className}ValidationFields {
 
   ${visitor.fieldsWithValidate.map((_e) {
         final e = _e.element;
+        final typeNameAndGenerics = _getTypeNameAndGenerics(e);
         final retType =
-            '${e.type.getDisplayString(withNullability: false)}Validation?';
+            '${typeNameAndGenerics.typeName}Validation${typeNameAndGenerics.generics}?';
         return '$retType get ${e.name} {'
             ' final l = errorsMap[${_fieldIdent(e.name)}];'
             ' return (l != null && l.isNotEmpty) ? l.first.nestedValidation as $retType : null;}';
@@ -105,22 +119,23 @@ class ${className}ValidationFields {
       }).join()}
 }
 
-class ${className}Validation extends Validation<${className}, $fieldTypeName> {
+class ${className}Validation$genericsBound extends Validation<${className}$generics, $fieldTypeName> {
   ${className}Validation(this.errorsMap, this.value, this.fields) : super(errorsMap);
   @override
   final Map<$fieldTypeName, List<ValidaError>> errorsMap;
   @override
-  final ${className} value;
+  final ${className}$generics value;
   @override
   final ${className}ValidationFields fields;
 
   /// Validates [value] and returns a [${className}Validation] with the errors found as a result
-  static ${className}Validation fromValue(${className} value) {
-    Object? _getProperty(String property) => spec.getField(value, property);
+  factory ${className}Validation.fromValue(${className}$generics value) {
+    ${generics.isEmpty ? 'const _spec = spec;' : 'final _spec = spec$generics();'}
+    Object? _getProperty(String property) => _spec.getField(value, property);
 
     final errors = <$fieldTypeName, List<ValidaError>>{
-      ${hasGlobalFunctionValidators ? 'if (spec.globalValidate != null) ${_fieldIdent(_globalFieldIdentifier())}: spec.globalValidate!(value),' : ''}
-      ...spec.fieldsMap.map(
+      ${hasGlobalFunctionValidators ? 'if (_spec.globalValidate != null) ${_fieldIdent(_globalFieldIdentifier())}: _spec.globalValidate!(value),' : ''}
+      ..._spec.fieldsMap.map(
         (key, field) => MapEntry(
           key,
           field.validate(${enumFields ? 'key.name' : 'key'}, _getProperty),
@@ -131,26 +146,12 @@ class ${className}Validation extends Validation<${className}, $fieldTypeName> {
     return ${className}Validation(errors, value, ${className}ValidationFields(errors));
   }
 
-  static const spec = ValidaSpec(
+  static ${generics.isEmpty ? 'const spec =' : 'ValidaSpec<${className}$generics, $fieldTypeName> spec$genericsBound() =>'} ValidaSpec(
     fieldsMap: {
       ${visitor.fieldsWithValidate.map(
         (_e) {
           final e = _e.element;
-          final annot = const TypeChecker.fromRuntime(ValidaNested)
-              .firstAnnotationOfExact(e.element);
-          final _annot = annot?.extractValue(
-                ValidaNested.fieldsSerde,
-                (map) => ValidaNested<dynamic>.fromJson(map),
-              ) ??
-              const ValidaNested<dynamic>();
-          final typeName = e.type.getDisplayString(withNullability: false);
-          final _funcName = _annot.overrideValidationName ??
-              '${typeName}Validation.fromValue';
-
-          return "${_fieldIdent(e.name)}: ValidaNested<${typeName}> "
-              "(omit: ${_annot.omit}, "
-              "customValidate: ${_annot.customValidateName}, "
-              "overrideValidation: $_funcName,),";
+          return "${_fieldIdent(e.name)}: ${_validaNested(e)},";
         },
       ).join()}
     ${visitor.fields.entries.map(
@@ -171,10 +172,10 @@ class ${className}Validation extends Validation<${className}, $fieldTypeName> {
     ${hasGlobalFunctionValidators ? 'globalValidate: _globalValidate,' : ''}
   );
 
-  static List<ValidaError> _globalValidate($className value) 
+  static List<ValidaError> _globalValidate$genericsBound($className$generics value) 
     => ${_globalFunctionValidation(annotationValue, visitor.validateFunctions)};
 
-  static Object? _getField(${className} value, String field) {
+  static Object? _getField$genericsBound(${className}$generics value, String field) {
     switch (field) {
       ${visitor.allFieldNames.map(
         (key) {
@@ -187,10 +188,45 @@ class ${className}Validation extends Validation<${className}, $fieldTypeName> {
   }
 }
 ''';
+      // print(output);
+      return output;
     } catch (e, s) {
       return 'const error = """$e\n$s""";';
     }
   }
+}
+
+TypeNameAndGenerics _getTypeNameAndGenerics(FieldDescription e) {
+  String typeName = e.type.getDisplayString(withNullability: false);
+  final index = typeName.indexOf('<');
+  String gen = '';
+  if (index != -1) {
+    gen = typeName.substring(index);
+    typeName = typeName.substring(0, index);
+  }
+  return TypeNameAndGenerics(generics: gen, typeName: typeName);
+}
+
+class TypeNameAndGenerics {
+  final String typeName;
+  final String generics;
+
+  TypeNameAndGenerics({
+    required this.typeName,
+    required this.generics,
+  });
+}
+
+String _typeList(List<TypeParameterElement> typeParams, {bool ext = false}) {
+  return typeParams.isNotEmpty
+      ? '<${typeParams.map((e) {
+          final _e = ext && e.bound != null
+              ? ' extends ${e.bound!.getDisplayString(withNullability: true)}'
+              : '';
+
+          return '${e.displayName}$_e';
+        }).join(',')}>'
+      : '';
 }
 
 String _globalFunctionValidation(
@@ -292,11 +328,11 @@ class $className with ToJson {
 }
 
 class FunctionVisitor extends SimpleElementVisitor<void> {
-  final modelVisitor = ModelVisitor();
+  FunctionVisitor(this.modelVisitor);
+  final ModelVisitor modelVisitor;
 
   @override
   void visitParameterElement(ParameterElement element) {
-    element.defaultValueCode;
     modelVisitor.visitFieldOrArgElement(FieldDescription(
       element: element,
       type: element.type,
@@ -320,8 +356,57 @@ String _getCleanCollectionType(DartType e) {
   return e.getDisplayString(withNullability: false);
 }
 
+String? _getGenericValidator(Element element) {
+  final annotConstString = getSourceCodeAnnotation(element.metadata.firstWhere(
+    (element) => const TypeChecker.fromRuntime(Valida)
+        .isAssignableFromType(element.computeConstantValue()!.type!),
+  ));
+  final genericValidator = const TypeChecker.fromRuntime(Valida)
+          .firstAnnotationOfExact(element)!
+          .getField('genericValidator')
+          ?.serde(SerdeType.function) as String? ??
+      (annotConstString.contains(
+              RegExp(r'genericValidator[\s]*:[\s]*Validators.instance'))
+          ? 'Validators.instance'
+          : null);
+  return genericValidator;
+}
+
+String _validaNested(FieldDescription e) {
+  final annot = const TypeChecker.fromRuntime(ValidaNested)
+      .firstAnnotationOfExact(e.element);
+  final _annot = annot?.extractValue(
+        ValidaNested.fieldsSerde,
+        (map) => ValidaNested<dynamic>.fromJson(map),
+      ) ??
+      const ValidaNested<dynamic>();
+  final typeName = e.type.getDisplayString(withNullability: false);
+
+  final typeNameAndGenerics = _getTypeNameAndGenerics(e);
+  final _funcName = _annot.overrideValidationName ??
+      '${typeNameAndGenerics.typeName}Validation.fromValue';
+
+  return 'ValidaNested<${typeName}> '
+      '(omit: ${_annot.omit}, '
+      'customValidate: ${_annot.customValidateName}, '
+      'overrideValidation: $_funcName,)';
+}
+
 class ModelVisitor extends SimpleElementVisitor<void> {
-  String? className;
+  ModelVisitor(
+    this.className,
+    this.typeParamList,
+    this.genericValidator,
+  );
+
+  final String className;
+  final List<TypeParameterElement> typeParamList;
+  final String? genericValidator;
+
+  late final Map<String, TypeParameterElement> typeParamMap = Map.fromIterables(
+    typeParamList.map((e) => e.name),
+    typeParamList,
+  );
 
   final allFieldNames = <String>{};
   final fields = <String, _Field>{};
@@ -340,12 +425,6 @@ class ModelVisitor extends SimpleElementVisitor<void> {
       validateFunctions.add(element);
     }
     super.visitMethodElement(element);
-  }
-
-  @override
-  dynamic visitConstructorElement(ConstructorElement element) {
-    className ??= element.returnType.toString();
-    return super.visitConstructorElement(element);
   }
 
   @override
@@ -373,20 +452,31 @@ class ModelVisitor extends SimpleElementVisitor<void> {
 
     String? nestedValida(String? wrapper, DartType type) {
       final elem = type.element!;
-      final fieldType = const TypeChecker.fromRuntime(Valida)
+      final hasValidaAnnotation = const TypeChecker.fromRuntime(Valida)
           .annotationsOfExact(elem)
-          .toList();
+          .toList()
+          .isNotEmpty;
+      if (hasValidaAnnotation && wrapper == null) {
+        fieldsWithValidate.add(_Field(prop));
+        return null;
+      }
+
+      final typeName = type.getDisplayString(withNullability: false);
+      final isGeneric = typeParamMap[typeName] != null;
 
       final isList = _isAssignable(List, elem);
       final isSet = _isAssignable(Set, elem);
       final isMap = _isAssignable(Map, elem);
-
-      if (fieldType.isNotEmpty) {
-        if (wrapper == null) {
-          fieldsWithValidate.add(_Field(prop));
-        } else {
-          return '${wrapper} ValidaNested(overrideValidation: ${elem.name}Validation.fromValue)';
+      if (isGeneric) {
+        if (genericValidator == null) {
+          throw 'Valida.genericValidator is required for'
+              ' generic types annotated with @Valida.'
+              ' You can use the generated "Validators.instance".';
         }
+        // TODO: other params
+        return '${wrapper ?? ''} ValidaNested<$typeName>(overrideValidation: ${genericValidator}().validate)';
+      } else if (hasValidaAnnotation) {
+        return '${wrapper} ValidaNested(overrideValidation: ${elem.name}Validation.fromValue)';
       } else if (type is InterfaceType && (isList || isSet || isMap)) {
         final typeParameters = type.typeArguments;
         String generics = '';

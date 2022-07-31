@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
 
 import 'package:valida/valida.dart';
+import 'package:valida_example/all_validators.dart';
 
 part 'main.g.dart';
 
@@ -142,10 +143,17 @@ class NestedField {
   @ValidaDate(max: 'now')
   final DateTime? optionalDateWithNowMax;
 
+  final GenericModel<NestedField?, String>? genericModel;
+
+  final List<GenericModel<String, NestedField>> genericModelList;
+
+  ///
   const NestedField({
     required this.timeStr,
     required this.dateWith2021Min,
     required this.optionalDateWithNowMax,
+    this.genericModel,
+    this.genericModelList = const [],
   });
 }
 
@@ -160,6 +168,22 @@ List<ValidaError> _customValidateSingleFunction(Object? _args) {
         message: "Can't have a 'none' name and a 'NONE' last name",
       ),
   ];
+}
+
+@Valida(genericValidator: Validators.instance)
+class GenericModel<T, O extends Object> {
+  final T value;
+  // @ValidaList(minLength: 3, each: ValidaNested<O>(overrideValidation: Validators.validate))
+  final List<O> objects;
+  @ValidaString(minLength: 1)
+  final String? params;
+
+  ///
+  GenericModel({
+    required this.value,
+    required this.objects,
+    this.params,
+  });
 }
 
 @Valida(customValidate: _customValidateSingleFunction)

@@ -59,12 +59,13 @@ class FormTestValidation extends Validation<FormTest, FormTestField> {
 
   /// Validates [value] and returns a [FormTestValidation] with the errors found as a result
   factory FormTestValidation.fromValue(FormTest value) {
-    Object? _getProperty(String property) => spec.getField(value, property);
+    const _spec = spec;
+    Object? _getProperty(String property) => _spec.getField(value, property);
 
     final errors = <FormTestField, List<ValidaError>>{
-      if (spec.globalValidate != null)
-        FormTestField.$global: spec.globalValidate!(value),
-      ...spec.fieldsMap.map(
+      if (_spec.globalValidate != null)
+        FormTestField.$global: _spec.globalValidate!(value),
+      ..._spec.fieldsMap.map(
         (key, field) => MapEntry(
           key,
           field.validate(key.name, _getProperty),
@@ -164,11 +165,21 @@ class NestedFieldValidationFields {
   const NestedFieldValidationFields(this.errorsMap);
   final Map<String, List<ValidaError>> errorsMap;
 
+  GenericModelValidation<NestedField, String>? get genericModel {
+    final l = errorsMap['genericModel'];
+    return (l != null && l.isNotEmpty)
+        ? l.first.nestedValidation
+            as GenericModelValidation<NestedField, String>?
+        : null;
+  }
+
   List<ValidaError> get timeStr => errorsMap['timeStr'] ?? const [];
   List<ValidaError> get dateWith2021Min =>
       errorsMap['dateWith2021Min'] ?? const [];
   List<ValidaError> get optionalDateWithNowMax =>
       errorsMap['optionalDateWithNowMax'] ?? const [];
+  List<ValidaError> get genericModelList =>
+      errorsMap['genericModelList'] ?? const [];
 }
 
 class NestedFieldValidation extends Validation<NestedField, String> {
@@ -183,10 +194,11 @@ class NestedFieldValidation extends Validation<NestedField, String> {
 
   /// Validates [value] and returns a [NestedFieldValidation] with the errors found as a result
   factory NestedFieldValidation.fromValue(NestedField value) {
-    Object? _getProperty(String property) => spec.getField(value, property);
+    const _spec = spec;
+    Object? _getProperty(String property) => _spec.getField(value, property);
 
     final errors = <String, List<ValidaError>>{
-      ...spec.fieldsMap.map(
+      ..._spec.fieldsMap.map(
         (key, field) => MapEntry(
           key,
           field.validate(key, _getProperty),
@@ -200,9 +212,17 @@ class NestedFieldValidation extends Validation<NestedField, String> {
 
   static const spec = ValidaSpec(
     fieldsMap: {
+      'genericModel': ValidaNested<GenericModel<NestedField, String>>(
+        omit: null,
+        customValidate: null,
+        overrideValidation: GenericModelValidation.fromValue,
+      ),
       'timeStr': ValidaString(isTime: true),
       'dateWith2021Min': ValidaDate(min: '2021-01-01'),
       'optionalDateWithNowMax': ValidaDate(max: 'now'),
+      'genericModelList': ValidaList<GenericModel<String, NestedField>>(
+          each: ValidaNested(
+              overrideValidation: GenericModelValidation.fromValue)),
     },
     getField: _getField,
   );
@@ -217,6 +237,92 @@ class NestedFieldValidation extends Validation<NestedField, String> {
         return value.dateWith2021Min;
       case 'optionalDateWithNowMax':
         return value.optionalDateWithNowMax;
+      case 'genericModel':
+        return value.genericModel;
+      case 'genericModelList':
+        return value.genericModelList;
+      case 'hashCode':
+        return value.hashCode;
+      case 'runtimeType':
+        return value.runtimeType;
+      default:
+        throw Exception('Could not find field "$field" for value $value.');
+    }
+  }
+}
+
+enum GenericModelField {
+  value,
+  objects,
+  params,
+}
+
+class GenericModelValidationFields {
+  const GenericModelValidationFields(this.errorsMap);
+  final Map<GenericModelField, List<ValidaError>> errorsMap;
+
+  List<ValidaError> get value => errorsMap[GenericModelField.value] ?? const [];
+  List<ValidaError> get objects =>
+      errorsMap[GenericModelField.objects] ?? const [];
+  List<ValidaError> get params =>
+      errorsMap[GenericModelField.params] ?? const [];
+}
+
+class GenericModelValidation<T, O extends Object>
+    extends Validation<GenericModel<T, O>, GenericModelField> {
+  GenericModelValidation(this.errorsMap, this.value, this.fields)
+      : super(errorsMap);
+  @override
+  final Map<GenericModelField, List<ValidaError>> errorsMap;
+  @override
+  final GenericModel<T, O> value;
+  @override
+  final GenericModelValidationFields fields;
+
+  /// Validates [value] and returns a [GenericModelValidation] with the errors found as a result
+  factory GenericModelValidation.fromValue(GenericModel<T, O> value) {
+    final _spec = spec<T, O>();
+    Object? _getProperty(String property) => _spec.getField(value, property);
+
+    final errors = <GenericModelField, List<ValidaError>>{
+      ..._spec.fieldsMap.map(
+        (key, field) => MapEntry(
+          key,
+          field.validate(key.name, _getProperty),
+        ),
+      )
+    };
+    errors.removeWhere((key, value) => value.isEmpty);
+    return GenericModelValidation(
+        errors, value, GenericModelValidationFields(errors));
+  }
+
+  static ValidaSpec<GenericModel<T, O>, GenericModelField>
+      spec<T, O extends Object>() => ValidaSpec(
+            fieldsMap: {
+              GenericModelField.value: ValidaNested<T>(
+                  overrideValidation: Validators.instance().validate),
+              GenericModelField.objects: ValidaList<O>(
+                  each: ValidaNested<O>(
+                      overrideValidation: Validators.instance().validate)),
+              GenericModelField.params: ValidaString(minLength: 1),
+            },
+            getField: _getField,
+          );
+
+  static List<ValidaError> _globalValidate<T, O extends Object>(
+          GenericModel<T, O> value) =>
+      [];
+
+  static Object? _getField<T, O extends Object>(
+      GenericModel<T, O> value, String field) {
+    switch (field) {
+      case 'value':
+        return value.value;
+      case 'objects':
+        return value.objects;
+      case 'params':
+        return value.params;
       case 'hashCode':
         return value.hashCode;
       case 'runtimeType':
@@ -320,12 +426,13 @@ class SingleFunctionArgsValidation
 
   /// Validates [value] and returns a [SingleFunctionArgsValidation] with the errors found as a result
   factory SingleFunctionArgsValidation.fromValue(SingleFunctionArgs value) {
-    Object? _getProperty(String property) => spec.getField(value, property);
+    const _spec = spec;
+    Object? _getProperty(String property) => _spec.getField(value, property);
 
     final errors = <SingleFunctionArgsField, List<ValidaError>>{
-      if (spec.globalValidate != null)
-        SingleFunctionArgsField.$global: spec.globalValidate!(value),
-      ...spec.fieldsMap.map(
+      if (_spec.globalValidate != null)
+        SingleFunctionArgsField.$global: _spec.globalValidate!(value),
+      ..._spec.fieldsMap.map(
         (key, field) => MapEntry(
           key,
           field.validate(key.name, _getProperty),
@@ -469,10 +576,11 @@ class _SingleFunction2ArgsValidation
 
   /// Validates [value] and returns a [_SingleFunction2ArgsValidation] with the errors found as a result
   factory _SingleFunction2ArgsValidation.fromValue(_SingleFunction2Args value) {
-    Object? _getProperty(String property) => spec.getField(value, property);
+    const _spec = spec;
+    Object? _getProperty(String property) => _spec.getField(value, property);
 
     final errors = <_SingleFunction2ArgsField, List<ValidaError>>{
-      ...spec.fieldsMap.map(
+      ..._spec.fieldsMap.map(
         (key, field) => MapEntry(
           key,
           field.validate(key.name, _getProperty),
