@@ -32,7 +32,7 @@ class ValidaString extends ValidaField<String> with ValidaLength {
   final int? maxLength;
 
   /// Should be a phone number
-  final bool? isPhone;
+  // final bool? isPhone;
 
   /// Should be an email
   final bool? isEmail;
@@ -108,7 +108,11 @@ class ValidaString extends ValidaField<String> with ValidaLength {
 
   /// Should be a number divisible by this one
   final int? isDivisibleBy;
+
+  /// The minimum length of surrogate pairs in the String
   final int? surrogatePairsLengthMin;
+
+  /// The maximum length of surrogate pairs in the String
   final int? surrogatePairsLengthMax;
 
   /// Should be lowercase
@@ -133,7 +137,7 @@ class ValidaString extends ValidaField<String> with ValidaLength {
     this.isIn,
     this.maxLength,
     this.minLength,
-    this.isPhone,
+    // this.isPhone,
     this.isEmail,
     this.isDate,
     this.isTime,
@@ -176,7 +180,7 @@ class ValidaString extends ValidaField<String> with ValidaLength {
       'isIn': isIn,
       'maxLength': maxLength,
       'minLength': minLength,
-      'isPhone': isPhone,
+      // 'isPhone': isPhone,
       'isEmail': isEmail,
       'isDate': isDate,
       'isTime': isTime,
@@ -216,7 +220,7 @@ class ValidaString extends ValidaField<String> with ValidaLength {
           map['isIn'] == null ? null : List<String>.from(map['isIn']! as List),
       maxLength: map['maxLength'] as int?,
       minLength: map['minLength'] as int?,
-      isPhone: map['isPhone'] as bool?,
+      // isPhone: map['isPhone'] as bool?,
       isEmail: map['isEmail'] as bool?,
       isDate: map['isDate'] as bool?,
       isTime: map['isTime'] as bool?,
@@ -260,7 +264,7 @@ class ValidaString extends ValidaField<String> with ValidaLength {
     'isIn': SerdeType.list(SerdeType.str),
     'maxLength': SerdeType.int,
     'minLength': SerdeType.int,
-    'isPhone': SerdeType.bool,
+    // 'isPhone': SerdeType.bool,
     'isEmail': SerdeType.bool,
     'isDate': SerdeType.bool,
     'isTime': SerdeType.bool,
@@ -313,7 +317,7 @@ class ValidaString extends ValidaField<String> with ValidaLength {
     }
     errors.addAll(validateLength(property, value, value.length));
 
-    // TODO:
+    // TODO: support `ValidaString.isPhone`
     // if (isPhone == true && !validators.isPhone(value)) {
     //   _addError(
     //     errorCode: 'ValidaString.isPhone',
@@ -335,14 +339,13 @@ class ValidaString extends ValidaField<String> with ValidaLength {
         validationParam: null,
       );
     }
-    // TODO:
-    // if (isTime == true && !validators.isTime(value)) {
-    //   _addError(
-    //     errorCode: 'ValidaString.isTime',
-    //     message: 'Should be a time',
-    //     validationParam: null,
-    //   );
-    // }
+    if (isTime == true && DateTime.tryParse('1970-01-01T$value') == null) {
+      _addError(
+        errorCode: 'ValidaString.isTime',
+        message: 'Should be a time',
+        validationParam: null,
+      );
+    }
     if (isBool == true && (value != 'true' && value != 'false')) {
       _addError(
         errorCode: 'ValidaString.isBool',
@@ -372,14 +375,13 @@ class ValidaString extends ValidaField<String> with ValidaLength {
         validationParam: isUUID,
       );
     }
-    // TODO:
-    // if (isCurrency == true && !validators.isCurrency(value)) {
-    //   _addError(
-    //     errorCode: 'ValidaString.isCurrency',
-    //     message: 'Should be a currency',
-    //     validationParam: null,
-    //   );
-    // }
+    if (isCurrency == true && !ISO4217CurrencyCodes.contains(value)) {
+      _addError(
+        errorCode: 'ValidaString.isCurrency',
+        message: 'Should be a ISO 4217 currency code',
+        validationParam: null,
+      );
+    }
     if (isJSON == true && !validators.isJSON(value)) {
       _addError(
         errorCode: 'ValidaString.isJSON',
@@ -535,19 +537,205 @@ class ValidaString extends ValidaField<String> with ValidaLength {
   }
 }
 
-T? _parseEnum<T>(String? raw, List<T> enumValues) {
+T? _parseEnum<T extends Enum>(String? raw, List<T> enumValues) {
   if (raw == null) {
     return null;
   }
   for (final value in enumValues) {
     final str = value.toString();
-    if (raw == str || raw == str.split('.')[1]) {
+    if (raw == str || raw == value.name) {
       return value;
     }
   }
   throw Error();
 }
 
-String? _toEnumString(Object? value) {
-  return value == null ? null : value.toString().split('.')[1];
+String? _toEnumString(Enum? value) {
+  return value?.name;
 }
+
+/// List of active codes of official ISO 4217
+/// currency names as of 1 April 2022.
+/// Taken from https://en.wikipedia.org/wiki/ISO_4217
+Set<String> ISO4217CurrencyCodes = const {
+  'AED',
+  'AFN',
+  'ALL',
+  'AMD',
+  'ANG',
+  'AOA',
+  'ARS',
+  'AUD',
+  'AWG',
+  'AZN',
+  'BAM',
+  'BBD',
+  'BDT',
+  'BGN',
+  'BHD',
+  'BIF',
+  'BMD',
+  'BND',
+  'BOB',
+  'BOV',
+  'BRL',
+  'BSD',
+  'BTN',
+  'BWP',
+  'BYN',
+  'BZD',
+  'CAD',
+  'CDF',
+  'CHE',
+  'CHF',
+  'CHW',
+  'CLF',
+  'CLP',
+  'COP',
+  'COU',
+  'CRC',
+  'CUC',
+  'CUP',
+  'CVE',
+  'CZK',
+  'DJF',
+  'DKK',
+  'DOP',
+  'DZD',
+  'EGP',
+  'ERN',
+  'ETB',
+  'EUR',
+  'FJD',
+  'FKP',
+  'GBP',
+  'GEL',
+  'GHS',
+  'GIP',
+  'GMD',
+  'GNF',
+  'GTQ',
+  'GYD',
+  'HKD',
+  'HNL',
+  'HRK',
+  'HTG',
+  'HUF',
+  'IDR',
+  'ILS',
+  'INR',
+  'IQD',
+  'IRR',
+  'ISK',
+  'JMD',
+  'JOD',
+  'JPY',
+  'KES',
+  'KGS',
+  'KHR',
+  'KMF',
+  'KPW',
+  'KRW',
+  'KWD',
+  'KYD',
+  'KZT',
+  'LAK',
+  'LBP',
+  'LKR',
+  'LRD',
+  'LSL',
+  'LYD',
+  'MAD',
+  'MDL',
+  'MGA',
+  'MKD',
+  'MMK',
+  'MNT',
+  'MOP',
+  'MRU',
+  'MUR',
+  'MVR',
+  'MWK',
+  'MXN',
+  'MXV',
+  'MYR',
+  'MZN',
+  'NAD',
+  'NGN',
+  'NIO',
+  'NOK',
+  'NPR',
+  'NZD',
+  'OMR',
+  'PAB',
+  'PEN',
+  'PGK',
+  'PHP',
+  'PKR',
+  'PLN',
+  'PYG',
+  'QAR',
+  'RON',
+  'RSD',
+  'CNY',
+  'RUB',
+  'RWF',
+  'SAR',
+  'SBD',
+  'SCR',
+  'SDG',
+  'SEK',
+  'SGD',
+  'SHP',
+  'SLL',
+  'SOS',
+  'SRD',
+  'SSP',
+  'STN',
+  'SVC',
+  'SYP',
+  'SZL',
+  'THB',
+  'TJS',
+  'TMT',
+  'TND',
+  'TOP',
+  'TRY',
+  'TTD',
+  'TWD',
+  'TZS',
+  'UAH',
+  'UGX',
+  'USD',
+  'USN',
+  'UYI',
+  'UYU',
+  'UYW',
+  'UZS',
+  'VED',
+  'VES',
+  'VND',
+  'VUV',
+  'WST',
+  'XAF',
+  'XAG',
+  'XAU',
+  'XBA',
+  'XBB',
+  'XBC',
+  'XBD',
+  'XCD',
+  'XDR',
+  'XOF',
+  'XPD',
+  'XPF',
+  'XPT',
+  'XSU',
+  'XTS',
+  'XUA',
+  'XXX',
+  'YER',
+  'ZAR',
+  'ZMW',
+  'ZW',
+};
