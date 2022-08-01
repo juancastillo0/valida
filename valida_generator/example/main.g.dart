@@ -13,6 +13,9 @@ enum FormTestField {
   optionalDecimal,
   nonEmptyList,
   identifier,
+  nestedList,
+  nestedMap,
+  nestedSet,
   nested,
   $global
 }
@@ -35,12 +38,16 @@ class FormTestValidationFields {
       errorsMap[FormTestField.optionalDecimal];
   List<ValidaError>? get nonEmptyList => errorsMap[FormTestField.nonEmptyList];
   List<ValidaError>? get identifier => errorsMap[FormTestField.identifier];
+  List<ValidaError>? get nestedList => errorsMap[FormTestField.nestedList];
+  List<ValidaError>? get nestedMap => errorsMap[FormTestField.nestedMap];
+  List<ValidaError>? get nestedSet => errorsMap[FormTestField.nestedSet];
   List<ValidaError>? get $global => errorsMap[FormTestField.$global];
 }
 
 class FormTestValidation extends Validation<FormTest, FormTestField> {
-  FormTestValidation(this.errorsMap, this.value, this.fields)
-      : super(errorsMap);
+  FormTestValidation(this.errorsMap, this.value)
+      : fields = FormTestValidationFields(errorsMap),
+        super(errorsMap);
   @override
   final Map<FormTestField, List<ValidaError>> errorsMap;
   @override
@@ -49,24 +56,15 @@ class FormTestValidation extends Validation<FormTest, FormTestField> {
   final FormTestValidationFields fields;
 
   /// Validates [value] and returns a [FormTestValidation] with the errors found as a result
-  static FormTestValidation fromValue(FormTest value) {
-    Object? _getProperty(String property) => spec.getField(value, property);
-
-    final errors = <FormTestField, List<ValidaError>>{
-      if (spec.globalValidate != null)
-        FormTestField.$global: spec.globalValidate!(value),
-      ...spec.fieldsMap.map(
-        (key, field) => MapEntry(
-          key,
-          field.validate(key.name, _getProperty),
-        ),
-      )
-    };
-    errors.removeWhere((key, value) => value.isEmpty);
-    return FormTestValidation(errors, value, FormTestValidationFields(errors));
-  }
+  factory FormTestValidation.fromValue(FormTest value) => spec.validate(value);
 
   static const spec = ValidaSpec(
+    globalValidate: GlobalValidateFunc(
+      function: _globalValidate,
+      field: FormTestField.$global,
+    ),
+    validationFactory: FormTestValidation.new,
+    getField: _getField,
     fieldsMap: {
       FormTestField.nested: ValidaNested<NestedField>(
         omit: null,
@@ -77,7 +75,9 @@ class FormTestValidation extends Validation<FormTest, FormTestField> {
           minLength: 15,
           maxLength: 50,
           matches: r'^[a-zA-Z]+$',
-          customValidate: _customValidateStr),
+          customValidate: _customValidateStr,
+          description: 'should have between 15 and 50 bytes, only letters'
+              " and cannot be 'WrongValue'"),
       FormTestField.shortStr: ValidaString(maxLength: 20, contains: '@'),
       FormTestField.positiveInt: ValidaNum(
           isInt: true, min: 0, customValidate: FormTest._customValidateNum),
@@ -90,9 +90,18 @@ class FormTestValidation extends Validation<FormTest, FormTestField> {
       FormTestField.nonEmptyList: ValidaList(
           minLength: 1, each: ValidaString(isDate: true, maxLength: 3)),
       FormTestField.identifier: ValidaString(isUUID: UUIDVersion.v4),
+      FormTestField.nestedList: ValidaList(
+          maxLength: 2,
+          each: ValidaNested(
+              overrideValidation: NestedFieldValidation.fromValue,
+              omit: false,
+              customValidate: FormTest._customValidateNestedListItem)),
+      FormTestField.nestedMap: ValidaMap<String, NestedField>(
+          eachValue: ValidaNested(
+              overrideValidation: NestedFieldValidation.fromValue)),
+      FormTestField.nestedSet:
+          ValidaSet(each: ValidaNested<NestedField>(omit: true)),
     },
-    getField: _getField,
-    globalValidate: _globalValidate,
   );
 
   static List<ValidaError> _globalValidate(FormTest value) => [
@@ -103,8 +112,6 @@ class FormTestValidation extends Validation<FormTest, FormTestField> {
 
   static Object? _getField(FormTest value, String field) {
     switch (field) {
-      case 'nested':
-        return value.nested;
       case 'longStr':
         return value.longStr;
       case 'shortStr':
@@ -117,64 +124,59 @@ class FormTestValidation extends Validation<FormTest, FormTestField> {
         return value.nonEmptyList;
       case 'identifier':
         return value.identifier;
+      case 'nested':
+        return value.nested;
+      case 'nestedList':
+        return value.nestedList;
+      case 'nestedMap':
+        return value.nestedMap;
+      case 'nestedSet':
+        return value.nestedSet;
+      case 'hashCode':
+        return value.hashCode;
+      case 'runtimeType':
+        return value.runtimeType;
       default:
-        throw Exception();
+        throw Exception('Could not find field "$field" for value $value.');
     }
   }
 }
 
-enum NestedFieldField {
-  timeStr,
-  dateWith2021Min,
-  optionalDateWithNowMax,
-}
-
 class NestedFieldValidationFields {
   const NestedFieldValidationFields(this.errorsMap);
-  final Map<NestedFieldField, List<ValidaError>> errorsMap;
+  final Map<String, List<ValidaError>> errorsMap;
 
-  List<ValidaError> get timeStr =>
-      errorsMap[NestedFieldField.timeStr] ?? const [];
+  List<ValidaError> get timeStr => errorsMap['timeStr'] ?? const [];
   List<ValidaError> get dateWith2021Min =>
-      errorsMap[NestedFieldField.dateWith2021Min] ?? const [];
+      errorsMap['dateWith2021Min'] ?? const [];
   List<ValidaError> get optionalDateWithNowMax =>
-      errorsMap[NestedFieldField.optionalDateWithNowMax] ?? const [];
+      errorsMap['optionalDateWithNowMax'] ?? const [];
 }
 
-class NestedFieldValidation extends Validation<NestedField, NestedFieldField> {
-  NestedFieldValidation(this.errorsMap, this.value, this.fields)
-      : super(errorsMap);
+class NestedFieldValidation extends Validation<NestedField, String> {
+  NestedFieldValidation(this.errorsMap, this.value)
+      : fields = NestedFieldValidationFields(errorsMap),
+        super(errorsMap);
   @override
-  final Map<NestedFieldField, List<ValidaError>> errorsMap;
+  final Map<String, List<ValidaError>> errorsMap;
   @override
   final NestedField value;
   @override
   final NestedFieldValidationFields fields;
 
   /// Validates [value] and returns a [NestedFieldValidation] with the errors found as a result
-  static NestedFieldValidation fromValue(NestedField value) {
-    Object? _getProperty(String property) => spec.getField(value, property);
-
-    final errors = <NestedFieldField, List<ValidaError>>{
-      ...spec.fieldsMap.map(
-        (key, field) => MapEntry(
-          key,
-          field.validate(key.name, _getProperty),
-        ),
-      )
-    };
-    errors.removeWhere((key, value) => value.isEmpty);
-    return NestedFieldValidation(
-        errors, value, NestedFieldValidationFields(errors));
-  }
+  factory NestedFieldValidation.fromValue(NestedField value) =>
+      spec.validate(value);
 
   static const spec = ValidaSpec(
-    fieldsMap: {
-      NestedFieldField.timeStr: ValidaString(isTime: true),
-      NestedFieldField.dateWith2021Min: ValidaDate(min: '2021-01-01'),
-      NestedFieldField.optionalDateWithNowMax: ValidaDate(max: 'now'),
-    },
+    globalValidate: null,
+    validationFactory: NestedFieldValidation.new,
     getField: _getField,
+    fieldsMap: {
+      'timeStr': ValidaString(isTime: true),
+      'dateWith2021Min': ValidaDate(min: '2021-01-01'),
+      'optionalDateWithNowMax': ValidaDate(max: 'now'),
+    },
   );
 
   static List<ValidaError> _globalValidate(NestedField value) => [];
@@ -187,8 +189,12 @@ class NestedFieldValidation extends Validation<NestedField, NestedFieldField> {
         return value.dateWith2021Min;
       case 'optionalDateWithNowMax':
         return value.optionalDateWithNowMax;
+      case 'hashCode':
+        return value.hashCode;
+      case 'runtimeType':
+        return value.runtimeType;
       default:
-        throw Exception();
+        throw Exception('Could not find field "$field" for value $value.');
     }
   }
 }
@@ -267,8 +273,9 @@ class SingleFunctionArgsValidationFields {
 
 class SingleFunctionArgsValidation
     extends Validation<SingleFunctionArgs, SingleFunctionArgsField> {
-  SingleFunctionArgsValidation(this.errorsMap, this.value, this.fields)
-      : super(errorsMap);
+  SingleFunctionArgsValidation(this.errorsMap, this.value)
+      : fields = SingleFunctionArgsValidationFields(errorsMap),
+        super(errorsMap);
   @override
   final Map<SingleFunctionArgsField, List<ValidaError>> errorsMap;
   @override
@@ -277,33 +284,22 @@ class SingleFunctionArgsValidation
   final SingleFunctionArgsValidationFields fields;
 
   /// Validates [value] and returns a [SingleFunctionArgsValidation] with the errors found as a result
-  static SingleFunctionArgsValidation fromValue(SingleFunctionArgs value) {
-    Object? _getProperty(String property) => spec.getField(value, property);
-
-    final errors = <SingleFunctionArgsField, List<ValidaError>>{
-      if (spec.globalValidate != null)
-        SingleFunctionArgsField.$global: spec.globalValidate!(value),
-      ...spec.fieldsMap.map(
-        (key, field) => MapEntry(
-          key,
-          field.validate(key.name, _getProperty),
-        ),
-      )
-    };
-    errors.removeWhere((key, value) => value.isEmpty);
-    return SingleFunctionArgsValidation(
-        errors, value, SingleFunctionArgsValidationFields(errors));
-  }
+  factory SingleFunctionArgsValidation.fromValue(SingleFunctionArgs value) =>
+      spec.validate(value);
 
   static const spec = ValidaSpec(
+    globalValidate: GlobalValidateFunc(
+      function: _globalValidate,
+      field: SingleFunctionArgsField.$global,
+    ),
+    validationFactory: SingleFunctionArgsValidation.new,
+    getField: _getField,
     fieldsMap: {
       SingleFunctionArgsField.name:
           ValidaString(isLowercase: true, isAlpha: true),
       SingleFunctionArgsField.lastName:
           ValidaString(isUppercase: true, isAlpha: true),
     },
-    getField: _getField,
-    globalValidate: _globalValidate,
   );
 
   static List<ValidaError> _globalValidate(SingleFunctionArgs value) => [
@@ -317,7 +313,7 @@ class SingleFunctionArgsValidation
       case 'lastName':
         return value.lastName;
       default:
-        throw Exception();
+        throw Exception('Could not find field "$field" for value $value.');
     }
   }
 }
@@ -327,12 +323,14 @@ class _SingleFunction2Args with ToJson {
   final String name;
   final List<Object> nonEmptyList;
   final String lastName;
+  final Map<NestedField, List<dynamic>>? dynamicList;
 
   /// The arguments for [_singleFunction2].
   const _SingleFunction2Args(
     this.name, {
     required this.nonEmptyList,
     this.lastName = 'NONE',
+    this.dynamicList,
   });
 
   /// Validates this arguments for [_singleFunction2].
@@ -356,6 +354,7 @@ class _SingleFunction2Args with ToJson {
         'name': name,
         'nonEmptyList': nonEmptyList,
         'lastName': lastName,
+        'dynamicList': dynamicList,
       };
 
   @override
@@ -368,7 +367,8 @@ class _SingleFunction2Args with ToJson {
             other is _SingleFunction2Args &&
             name == other.name &&
             nonEmptyList == other.nonEmptyList &&
-            lastName == other.lastName);
+            lastName == other.lastName &&
+            dynamicList == other.dynamicList);
   }
 
   @override
@@ -377,6 +377,7 @@ class _SingleFunction2Args with ToJson {
         name,
         nonEmptyList,
         lastName,
+        dynamicList,
       );
 }
 
@@ -384,6 +385,7 @@ enum _SingleFunction2ArgsField {
   name,
   lastName,
   nonEmptyList,
+  dynamicList,
 }
 
 class _SingleFunction2ArgsValidationFields {
@@ -396,12 +398,15 @@ class _SingleFunction2ArgsValidationFields {
       errorsMap[_SingleFunction2ArgsField.lastName] ?? const [];
   List<ValidaError> get nonEmptyList =>
       errorsMap[_SingleFunction2ArgsField.nonEmptyList] ?? const [];
+  List<ValidaError> get dynamicList =>
+      errorsMap[_SingleFunction2ArgsField.dynamicList] ?? const [];
 }
 
 class _SingleFunction2ArgsValidation
     extends Validation<_SingleFunction2Args, _SingleFunction2ArgsField> {
-  _SingleFunction2ArgsValidation(this.errorsMap, this.value, this.fields)
-      : super(errorsMap);
+  _SingleFunction2ArgsValidation(this.errorsMap, this.value)
+      : fields = _SingleFunction2ArgsValidationFields(errorsMap),
+        super(errorsMap);
   @override
   final Map<_SingleFunction2ArgsField, List<ValidaError>> errorsMap;
   @override
@@ -410,31 +415,25 @@ class _SingleFunction2ArgsValidation
   final _SingleFunction2ArgsValidationFields fields;
 
   /// Validates [value] and returns a [_SingleFunction2ArgsValidation] with the errors found as a result
-  static _SingleFunction2ArgsValidation fromValue(_SingleFunction2Args value) {
-    Object? _getProperty(String property) => spec.getField(value, property);
-
-    final errors = <_SingleFunction2ArgsField, List<ValidaError>>{
-      ...spec.fieldsMap.map(
-        (key, field) => MapEntry(
-          key,
-          field.validate(key.name, _getProperty),
-        ),
-      )
-    };
-    errors.removeWhere((key, value) => value.isEmpty);
-    return _SingleFunction2ArgsValidation(
-        errors, value, _SingleFunction2ArgsValidationFields(errors));
-  }
+  factory _SingleFunction2ArgsValidation.fromValue(
+          _SingleFunction2Args value) =>
+      spec.validate(value);
 
   static const spec = ValidaSpec(
+    globalValidate: null,
+    validationFactory: _SingleFunction2ArgsValidation.new,
+    getField: _getField,
     fieldsMap: {
       _SingleFunction2ArgsField.name:
           ValidaString(isLowercase: true, isAlpha: true),
       _SingleFunction2ArgsField.lastName:
           ValidaString(isUppercase: true, isAlpha: true),
       _SingleFunction2ArgsField.nonEmptyList: ValidaList<Object>(minLength: 1),
+      _SingleFunction2ArgsField.dynamicList:
+          ValidaMap<NestedField, List<dynamic>>(
+              eachKey: ValidaNested(
+                  overrideValidation: NestedFieldValidation.fromValue)),
     },
-    getField: _getField,
   );
 
   static List<ValidaError> _globalValidate(_SingleFunction2Args value) => [];
@@ -447,8 +446,10 @@ class _SingleFunction2ArgsValidation
         return value.lastName;
       case 'nonEmptyList':
         return value.nonEmptyList;
+      case 'dynamicList':
+        return value.dynamicList;
       default:
-        throw Exception();
+        throw Exception('Could not find field "$field" for value $value.');
     }
   }
 }
