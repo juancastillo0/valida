@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/visitor.dart';
 import 'package:build/build.dart';
 import 'package:dart_style/dart_style.dart';
 import 'package:glob/glob.dart';
@@ -35,9 +36,13 @@ class ValidatorsLibGenerator implements Builder {
     await for (final input in buildStep.findAssets(Glob('lib/**.dart'))) {
       try {
         final library = await buildStep.resolver.libraryFor(input);
-        final classesInLibrary = LibraryReader(library).classes;
+        final reader = LibraryReader(library);
+        for (final element in reader.allElements) {
+          element.visitChildren(const _WarningElementVisitor());
+        }
+        final classesInLibrary = reader.classes;
         final functionsInLibrary =
-            LibraryReader(library).allElements.whereType<FunctionElement>();
+            reader.allElements.whereType<FunctionElement>();
 
         allElements.addAll(
           classesInLibrary.where(
@@ -120,4 +125,41 @@ String _name(Element e) {
     return getFunctionArgsClassName(e);
   }
   return e.name!;
+}
+
+class _WarningElementVisitor extends SimpleElementVisitor<void> {
+  const _WarningElementVisitor();
+
+  void visit(Element element) {
+    if (const TypeChecker.fromRuntime(ValidaField).hasAnnotationOf(element) &&
+        element.enclosingElement != null &&
+        !const TypeChecker.fromRuntime(Valida)
+            .hasAnnotationOfExact(element.enclosingElement!)) {
+      print(
+        'Element "${element}" has a `ValidaField` annotation,'
+        ' but it\'s enclosing element "${element.enclosingElement}"'
+        ' does not have a `Valida` annotation.'
+        ' The field may not be validated.',
+      );
+    }
+  }
+
+  @override
+  void visitConstructorElement(ConstructorElement element) => visit(element);
+  @override
+  void visitFieldElement(FieldElement element) => visit(element);
+  @override
+  void visitFunctionElement(FunctionElement element) => visit(element);
+  @override
+  void visitMethodElement(MethodElement element) => visit(element);
+  @override
+  void visitParameterElement(ParameterElement element) => visit(element);
+  @override
+  void visitPropertyAccessorElement(PropertyAccessorElement element) =>
+      visit(element);
+  @override
+  void visitClassElement(ClassElement element) => visit(element);
+  @override
+  void visitSuperFormalParameterElement(SuperFormalParameterElement element) =>
+      visit(element);
 }
