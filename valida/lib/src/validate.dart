@@ -6,7 +6,7 @@ export 'validate_annotations.dart';
 
 /// Error generated in the process of
 /// validating a class or field
-class ValidaError with ToJson {
+class ValidaError with ValidaToJson {
   // TODO: final F fieldId;
 
   /// The name of the field that caused this error
@@ -83,7 +83,7 @@ class Validated<T> {
 }
 
 /// The result of a validation for [T] with fields of type [F]
-abstract class Validation<T, F> with ToJson {
+abstract class Validation<T, F> with ValidaToJson {
   /// The result of a validation for [T] with fields of type [F]
   Validation(Map<F, List<ValidaError>> errorsMap)
       : errorsMap = Map.unmodifiable(errorsMap),

@@ -302,7 +302,7 @@ class GenericModelValidation<T, O extends Object>
 }
 
 /// The arguments for [singleFunction].
-class SingleFunctionArgs with ToJson {
+class SingleFunctionArgs with ValidaToJson {
   final String name;
   final String lastName;
   final List<Map<String, CustomList<FormTest>>>? nestedList;
@@ -437,7 +437,7 @@ class SingleFunctionArgsValidation
 }
 
 /// The arguments for [_singleFunction2].
-class _SingleFunction2Args with ToJson {
+class _SingleFunction2Args with ValidaToJson {
   final String name;
   final List<Object> nonEmptyList;
   final String lastName;

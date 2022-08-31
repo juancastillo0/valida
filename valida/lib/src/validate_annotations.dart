@@ -13,7 +13,7 @@ export 'validate_string.dart';
 /// field will be nullable. Default false.
 /// if [enumFields] is true, the field type will be a
 /// generated enum. Default true.
-class Valida<T> with ToJson implements ValidaCustom<T> {
+class Valida<T> with ValidaToJson implements ValidaCustom<T> {
   /// If true, the error lists for each field will be nullable.
   /// Default false.
   final bool? nullableErrorLists;
@@ -240,7 +240,7 @@ abstract class ValidaComparable<T extends Comparable<T>> {
 }
 
 /// The comparison for validators which are comparable
-class ValidaComparison<T extends Comparable<T>> with ToJson {
+class ValidaComparison<T extends Comparable<T>> with ValidaToJson {
   /// Whether to use [Comparable.compare] or `<` and `>`.
   final bool useCompareTo;
 
@@ -404,7 +404,7 @@ class ValidaComparison<T extends Comparable<T>> with ToJson {
 }
 
 /// Interface for validators which are fields of a class
-abstract class ValidaField<T> with ToJson implements ValidaCustom<T> {
+abstract class ValidaField<T> with ValidaToJson implements ValidaCustom<T> {
   /// Interface for validators which are fields of a class
   const ValidaField();
 

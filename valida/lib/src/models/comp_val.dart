@@ -10,7 +10,7 @@ import 'package:valida/src/models/to_json_mixin.dart';
 /// [CompVal.ref] is a reference to another field
 /// [CompVal.list] accept multiple values in the comparison
 @immutable
-abstract class CompVal<T extends Comparable<T>> with ToJson {
+abstract class CompVal<T extends Comparable<T>> with ValidaToJson {
   const CompVal._();
 
   static const fieldsSerde = SerdeType.late(_makeFieldsSerde);

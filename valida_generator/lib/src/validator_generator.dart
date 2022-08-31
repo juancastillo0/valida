@@ -257,7 +257,7 @@ String generateArgsClass(
   int optionalPositionArgs = 0;
   return '''
 /// The arguments for [${element.name}].
-class $className with ToJson {
+class $className with ValidaToJson {
   ${params.map((e) {
     return '${e.documentationComment == null ? '' : '/// ${e.documentationComment}\n'}'
         'final ${e.type.getDisplayString(withNullability: true)} ${e.name};';
