@@ -16,6 +16,7 @@ enum FormTestField {
   nestedList,
   nestedMap,
   nestedSet,
+  nestedNullableList,
   nested,
   $global
 }
@@ -41,6 +42,8 @@ class FormTestValidationFields {
   List<ValidaError>? get nestedList => errorsMap[FormTestField.nestedList];
   List<ValidaError>? get nestedMap => errorsMap[FormTestField.nestedMap];
   List<ValidaError>? get nestedSet => errorsMap[FormTestField.nestedSet];
+  List<ValidaError>? get nestedNullableList =>
+      errorsMap[FormTestField.nestedNullableList];
   List<ValidaError>? get $global => errorsMap[FormTestField.$global];
 }
 
@@ -101,6 +104,9 @@ class FormTestValidation extends Validation<FormTest, FormTestField> {
               overrideValidation: NestedFieldValidation.fromValue)),
       FormTestField.nestedSet:
           ValidaSet(each: ValidaNested<NestedField>(omit: true)),
+      FormTestField.nestedNullableList: ValidaList<NestedField>(
+          each: ValidaNested(
+              overrideValidation: NestedFieldValidation.fromValue)),
     },
   );
 
@@ -132,6 +138,8 @@ class FormTestValidation extends Validation<FormTest, FormTestField> {
         return value.nestedMap;
       case 'nestedSet':
         return value.nestedSet;
+      case 'nestedNullableList':
+        return value.nestedNullableList;
       case 'hashCode':
         return value.hashCode;
       case 'runtimeType':
@@ -203,11 +211,13 @@ class NestedFieldValidation extends Validation<NestedField, String> {
 class SingleFunctionArgs with ValidaToJson {
   final String name;
   final String lastName;
+  final List<Map<String, CustomList<FormTest>>>? nestedList;
 
   /// The arguments for [singleFunction].
   const SingleFunctionArgs(
     this.name, [
     this.lastName = 'NONE',
+    this.nestedList,
   ]);
 
   /// Validates this arguments for [singleFunction].
@@ -230,6 +240,7 @@ class SingleFunctionArgs with ValidaToJson {
   Map<String, Object?> toJson() => {
         'name': name,
         'lastName': lastName,
+        'nestedList': nestedList,
       };
 
   @override
@@ -241,7 +252,8 @@ class SingleFunctionArgs with ValidaToJson {
         (other.runtimeType == runtimeType &&
             other is SingleFunctionArgs &&
             name == other.name &&
-            lastName == other.lastName);
+            lastName == other.lastName &&
+            nestedList == other.nestedList);
   }
 
   @override
@@ -249,12 +261,14 @@ class SingleFunctionArgs with ValidaToJson {
         runtimeType,
         name,
         lastName,
+        nestedList,
       );
 }
 
 enum SingleFunctionArgsField {
   name,
   lastName,
+  nestedList,
 
   $global
 }
@@ -267,6 +281,8 @@ class SingleFunctionArgsValidationFields {
       errorsMap[SingleFunctionArgsField.name] ?? const [];
   List<ValidaError> get lastName =>
       errorsMap[SingleFunctionArgsField.lastName] ?? const [];
+  List<ValidaError> get nestedList =>
+      errorsMap[SingleFunctionArgsField.nestedList] ?? const [];
   List<ValidaError> get $global =>
       errorsMap[SingleFunctionArgsField.$global] ?? const [];
 }
@@ -299,6 +315,12 @@ class SingleFunctionArgsValidation
           ValidaString(isLowercase: true, isAlpha: true),
       SingleFunctionArgsField.lastName:
           ValidaString(isUppercase: true, isAlpha: true),
+      SingleFunctionArgsField.nestedList:
+          ValidaList<Map<String, List<FormTest>>>(
+              each: ValidaMap<String, List<FormTest>>(
+                  eachValue: ValidaList<FormTest>(
+                      each: ValidaNested(
+                          overrideValidation: FormTestValidation.fromValue)))),
     },
   );
 
@@ -312,6 +334,8 @@ class SingleFunctionArgsValidation
         return value.name;
       case 'lastName':
         return value.lastName;
+      case 'nestedList':
+        return value.nestedList;
       default:
         throw Exception('Could not find field "$field" for value $value.');
     }

@@ -1,3 +1,6 @@
+// ignore: depend_on_referenced_packages
+import 'package:collection/collection.dart';
+
 import 'package:valida/valida.dart';
 
 part 'main.g.dart';
@@ -86,6 +89,8 @@ class FormTest {
   )
   final Set<NestedField?> nestedSet;
 
+  final CustomList<NestedField?> nestedNullableList;
+
   static List<ValidaError> _customValidateNestedListItem(NestedField f) {
     return [
       if (f.timeStr == '00:00')
@@ -110,6 +115,7 @@ class FormTest {
     this.nestedList,
     this.nestedMap = const {},
     this.nestedSet = const {},
+    this.nestedNullableList = const CustomList([]),
   });
 }
 
@@ -126,7 +132,7 @@ List<ValidaError> _customValidateStr(String value) {
   ];
 }
 
-@Valida(enumFields: false)
+@Valida<NestedField>(enumFields: false)
 class NestedField {
   @ValidaString(isTime: true)
   final String timeStr;
@@ -145,8 +151,7 @@ class NestedField {
   });
 }
 
-List<ValidaError> _customValidateSingleFunction(Object? _args) {
-  final args = _args! as SingleFunctionArgs;
+List<ValidaError> _customValidateSingleFunction(SingleFunctionArgs args) {
   return [
     if (args.name == 'none' && args.lastName == 'NONE')
       ValidaError(
@@ -162,21 +167,24 @@ List<ValidaError> _customValidateSingleFunction(Object? _args) {
 int singleFunction(
   @ValidaString(isLowercase: true, isAlpha: true) String name, [
   @ValidaString(isUppercase: true, isAlpha: true) String lastName = 'NONE',
+  List<Map<String, CustomList<FormTest>>>? nestedList,
 ]) {
-  final validation = SingleFunctionArgs(name, lastName).validate();
+  final validation = SingleFunctionArgs(name, lastName, nestedList).validate();
   if (validation.hasErrors) {
     throw validation;
   }
   return name.length + lastName.length;
 }
 
-@Valida()
+@Valida<_SingleFunction2Args>()
 int _singleFunction2(
   @ValidaString(isLowercase: true, isAlpha: true) String name, {
   @ValidaString(isUppercase: true, isAlpha: true) String lastName = 'NONE',
   @ValidaList<Object>(minLength: 1) required List<Object> nonEmptyList,
+  // ignore: strict_raw_type
   Map<NestedField, List>? dynamicList,
 }) {
+  // ignore: unused_local_variable
   final validated = _SingleFunction2Args(
     name,
     lastName: lastName,
@@ -184,4 +192,8 @@ int _singleFunction2(
     dynamicList: dynamicList,
   ).validatedOrThrow();
   return name.length + lastName.length + nonEmptyList.length;
+}
+
+class CustomList<T> extends DelegatingList<T> {
+  const CustomList(super.base);
 }

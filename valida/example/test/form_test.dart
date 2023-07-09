@@ -1,4 +1,5 @@
 import 'package:valida/valida.dart';
+import 'package:valida_example/all_validators.dart';
 import 'package:valida_example/main.dart';
 import 'package:test/test.dart';
 
@@ -33,6 +34,11 @@ void main() {
     );
 
     final FormTestValidation validation = FormTestValidation.fromValue(form);
+    expect(
+      validation.errorsMap.toString(),
+      Validators.instance().validate(form)?.errorsMap.toString(),
+    );
+    // ignore: unnecessary_type_check
     assert(validation is Validation<FormTest, FormTestField>);
     expect(validation.numErrors, 10);
     expect(validation.allErrors.length, 9);
@@ -80,6 +86,26 @@ void main() {
       'should have between 15 and 50 bytes, only letters'
       " and cannot be 'WrongValue'",
     );
+  });
+
+  test('all validators', () {
+    expect(
+      identical(
+        Validators.validatorFormTest,
+        Validators.instance().validator<FormTest>(),
+      ),
+      true,
+    );
+
+    expect(
+      identical(
+        Validators.validatorNestedField,
+        Validators.instance().validator<NestedField>(),
+      ),
+      true,
+    );
+
+    expect(Validators.instance().typeMap, hasLength(4 * 2));
   });
 
   test('GenericModel', () {
