@@ -1,3 +1,7 @@
+## [0.2.1] - 2023-07-09.
+
+* Support `analyzer: ">=5.0.0 <7.0.0"`
+
 ## [0.2.0] - 2023-07-08.
 
 * Use `Validator.fromFunction` for all validators
