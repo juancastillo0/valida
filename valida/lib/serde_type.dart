@@ -33,7 +33,8 @@ class SerdeType {
   const factory SerdeType.unionType(
     Set<SerdeType> variants,
   ) = SerdeTypeUnionType._;
-  const factory SerdeType.enumV(List values) = SerdeTypeEnum._;
+  const factory SerdeType.enumV(List<Object?> values) =
+      SerdeTypeEnum<Object?>._;
   const factory SerdeType.late(SerdeType Function() func) = SerdeTypeLate._;
 
   T when<T>({
@@ -50,7 +51,7 @@ class SerdeType {
     required T Function(SerdeTypeNested) nested,
     required T Function(SerdeTypeUnion) union,
     required T Function(SerdeTypeUnionType) unionType,
-    required T Function(SerdeTypeEnum) enumV,
+    required T Function(SerdeTypeEnum<Object?>) enumV,
     required T Function() dynamic,
     required T Function(SerdeTypeLate) late,
   }) {
@@ -106,7 +107,7 @@ class SerdeType {
     T Function(SerdeTypeNested)? nested,
     T Function(SerdeTypeUnion)? union,
     T Function(SerdeTypeUnionType)? unionType,
-    T Function(SerdeTypeEnum)? enumV,
+    T Function(SerdeTypeEnum<Object?>)? enumV,
     T Function()? dynamic,
     T Function(SerdeTypeLate)? late,
     required T Function() orElse,

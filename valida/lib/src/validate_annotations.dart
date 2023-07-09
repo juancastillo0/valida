@@ -90,7 +90,7 @@ class ValidaNested<T> extends ValidaField<T> {
 
   /// A function that executes the validation.
   /// By default, the generated function will be used
-  final Validation? Function(T value)? overrideValidation;
+  final Validation<Object?, Object?>? Function(T value)? overrideValidation;
 
   /// The name of the function used for validation. This value should not
   /// be used directly, since it is used for code generation
@@ -473,10 +473,10 @@ abstract class ValidaField<T> with ValidaToJson implements ValidaCustom<T> {
     required _T Function(ValidaNum) num,
     required _T Function(ValidaDate) date,
     required _T Function(ValidaDuration) duration,
-    required _T Function(ValidaList) list,
-    required _T Function(ValidaMap) map,
-    required _T Function(ValidaSet) set,
-    required _T Function(ValidaNested) nested,
+    required _T Function(ValidaList<Object?>) list,
+    required _T Function(ValidaMap<Object?, Object?>) map,
+    required _T Function(ValidaSet<Object?>) set,
+    required _T Function(ValidaNested<Object?>) nested,
   }) {
     switch (variantType) {
       case ValidaFieldType.string:

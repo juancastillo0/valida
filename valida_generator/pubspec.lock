@@ -253,10 +253,10 @@ packages:
     dependency: "direct dev"
     description:
       name: lint
-      sha256: "4a539aa34ec5721a2c7574ae2ca0336738ea4adc2a34887d54b7596310b33c85"
+      sha256: f4bd4dbaa39f4ae8836f2d1275f2f32bc68b3a8cce0a0735dd1f7a601f06682a
       url: "https://pub.dev"
     source: hosted
-    version: "1.10.0"
+    version: "2.1.2"
   logging:
     dependency: transitive
     description:
@@ -484,11 +484,10 @@ packages:
   valida:
     dependency: "direct main"
     description:
-      name: valida
-      sha256: ce8bc0305fb2f63a4c59d46f0865a8027bc166db6ed5c0d546df9b778c4209cd
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.1.0-dev.1"
+      path: "../valida"
+      relative: true
+    source: path
+    version: "0.2.0"
   validators:
     dependency: transitive
     description:

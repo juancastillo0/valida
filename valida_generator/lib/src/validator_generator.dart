@@ -15,7 +15,7 @@ import 'package:valida/valida.dart';
 
 import 'package:valida_generator/src/generator_utils.dart';
 
-class ValidatorGenerator extends GeneratorForAnnotation<Valida> {
+class ValidatorGenerator extends GeneratorForAnnotation<Valida<Object?>> {
   final BuilderOptions options;
 
   ValidatorGenerator(this.options);
@@ -219,7 +219,7 @@ String _typeList(List<TypeParameterElement> typeParams, {bool ext = false}) {
 }
 
 String _globalFunctionValidation(
-  Valida annotationValue,
+  Valida<Object?> annotationValue,
   Set<MethodElement> validateFunctions,
 ) {
   return '''
@@ -432,7 +432,7 @@ class ModelVisitor extends SimpleElementVisitor<void> {
     void _addFields({
       required TypeChecker annotation,
       required Map<String, SerdeType> fieldsSerde,
-      required ValidaField Function(Map<String, Object?> map) fromJson,
+      required ValidaField<Object?> Function(Map<String, Object?> map) fromJson,
     }) {
       if (annotation.hasAnnotationOfExact(prop.element)) {
         fields[prop.name] = _Field(prop);

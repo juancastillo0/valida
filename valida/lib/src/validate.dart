@@ -25,7 +25,7 @@ class ValidaError with ValidaToJson {
   final String message;
 
   /// The result of validating nested fields if the [value] is a class
-  final Validation? nestedValidation;
+  final Validation<Object?, Object?>? nestedValidation;
 
   /// Error generated in the process of
   /// validating a class or field
@@ -59,7 +59,10 @@ class ValidaError with ValidaToJson {
   }
 
   /// Converts a [validation] into a [ValidaError] if there are errors
-  static ValidaError? fromNested(String property, Validation validation) {
+  static ValidaError? fromNested(
+    String property,
+    Validation<Object?, Object?> validation,
+  ) {
     return validation.hasErrors
         ? ValidaError(
             errorCode: 'Valida.nested',
@@ -197,7 +200,7 @@ mixin GenericValidator {
 /// The specification of the validation for a given type [T] with field [F]
 class ValidaSpec<V extends Validation<T, F>, T, F> {
   /// A Map with specification of the validation for each field
-  final Map<F, ValidaField> fieldsMap;
+  final Map<F, ValidaField<Object?>> fieldsMap;
 
   /// Returns the [field] in [value]
   final Object? Function(T value, String field) getField;

@@ -26,10 +26,13 @@ linter:
     avoid_renaming_method_parameters: true
     avoid_equals_and_hash_code_on_mutable_classes: true
 
+    no_leading_underscores_for_local_identifiers: false
+
 analyzer:
-  strong-mode:
-    implicit-casts: false
-    implicit-dynamic: false
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
   exclude:
     - lib/**.g.dart
     - lib/**.freezed.dart

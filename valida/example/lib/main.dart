@@ -132,7 +132,7 @@ List<ValidaError> _customValidateStr(String value) {
   ];
 }
 
-@Valida(enumFields: false)
+@Valida<NestedField>(enumFields: false)
 class NestedField {
   @ValidaString(isTime: true)
   final String timeStr;
@@ -157,8 +157,7 @@ class NestedField {
   });
 }
 
-List<ValidaError> _customValidateSingleFunction(Object? _args) {
-  final args = _args! as SingleFunctionArgs;
+List<ValidaError> _customValidateSingleFunction(SingleFunctionArgs args) {
   return [
     if (args.name == 'none' && args.lastName == 'NONE')
       ValidaError(
@@ -170,7 +169,7 @@ List<ValidaError> _customValidateSingleFunction(Object? _args) {
   ];
 }
 
-@Valida(genericValidator: Validators.instance)
+@Valida<Object>(genericValidator: Validators.instance)
 class GenericModel<T, O extends Object> {
   final T value;
   // @ValidaList(minLength: 3, each: ValidaNested<O>(overrideValidation: Validators.validate))
@@ -199,13 +198,15 @@ int singleFunction(
   return name.length + lastName.length;
 }
 
-@Valida()
+@Valida<_SingleFunction2Args>()
 int _singleFunction2(
   @ValidaString(isLowercase: true, isAlpha: true) String name, {
   @ValidaString(isUppercase: true, isAlpha: true) String lastName = 'NONE',
   @ValidaList<Object>(minLength: 1) required List<Object> nonEmptyList,
+  // ignore: strict_raw_type
   Map<NestedField, List>? dynamicList,
 }) {
+  // ignore: unused_local_variable
   final validated = _SingleFunction2Args(
     name,
     lastName: lastName,
