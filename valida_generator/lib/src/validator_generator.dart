@@ -52,7 +52,7 @@ class ValidatorGenerator extends GeneratorForAnnotation<Valida> {
         );
         element.visitChildren(visitor);
         final _visited = <Element>{element};
-        ClassElement? elem = element;
+        InterfaceElement? elem = element;
         while (elem?.supertype != null) {
           final currentElem = elem!.supertype!.element;
           if (_visited.contains(currentElem)) {

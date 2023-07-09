@@ -4,7 +4,7 @@ import 'package:valida/src/validate.dart';
 /// Specification of the validation that should be
 /// executed over a given value which has a length.
 /// For example, collections like lists, sets and maps.
-abstract class ValidaLength {
+mixin ValidaLength {
   /// The minimum length the value should be
   int? get minLength;
 

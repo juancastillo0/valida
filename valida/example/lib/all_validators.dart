@@ -5,7 +5,7 @@ import 'package:valida_example/main.dart';
 /// found in code generation.
 class Validators with GenericValidator {
   Validators._() {
-    for (final v in <Validator>[
+    for (final v in <Validator<dynamic, dynamic>>[
       validatorFormTest,
       validatorNestedField,
       validatorGenericModel,
@@ -23,7 +23,7 @@ class Validators with GenericValidator {
 
   /// A map with all registered validators by
   /// the type of the model to validate
-  final typeMap = <Type, Validator>{};
+  final typeMap = <Type, Validator<dynamic, dynamic>>{};
 
   @override
   Validator<T, Validation<T, Object>>? validator<T>() {
@@ -38,11 +38,12 @@ class Validators with GenericValidator {
     return validator?.validate(value) as Validation<T, Object>?;
   }
 
-  static const validatorFormTest = Validator(FormTestValidation.fromValue);
+  static const validatorFormTest =
+      Validator.fromFunction(FormTestValidation.fromValue);
   static const validatorNestedField =
-      Validator(NestedFieldValidation.fromValue);
+      Validator.fromFunction(NestedFieldValidation.fromValue);
   static const validatorGenericModel =
-      Validator(GenericModelValidation.fromValue);
+      Validator.fromFunction(GenericModelValidation.fromValue);
   static const validatorSingleFunctionArgs =
-      Validator(SingleFunctionArgsValidation.fromValue);
+      Validator.fromFunction(SingleFunctionArgsValidation.fromValue);
 }

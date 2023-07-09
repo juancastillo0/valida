@@ -1,4 +1,9 @@
-## [0.1.0] - 2022-08-30.
+## [0.2.0] - 2023-07-08.
+
+* `Validator` unnamed factory was renamed to `Validator.fromFunction`
+* `ValidaLength` is a mixin instead of an abstract class
+
+## [0.1.0-dev.1] - 2022-08-30.
 
 Multiple breaking changes
 

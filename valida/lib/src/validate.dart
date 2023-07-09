@@ -159,10 +159,15 @@ abstract class Validator<T, V extends Validation<T, Object>> {
   Type get modelNullType => _getType<T?>();
 
   /// An object that can validate a value of type [T]
-  const factory Validator(V Function(T) validate) = _ValidatorValue<T, V>;
+  const Validator();
+
+  /// An object that validates a value of type [T] using the [validate] function
+  const factory Validator.fromFunction(V Function(T) validate) =
+      _ValidatorValue<T, V>;
 }
 
-class _ValidatorValue<T, V extends Validation<T, Object>> with Validator<T, V> {
+class _ValidatorValue<T, V extends Validation<T, Object>>
+    extends Validator<T, V> {
   final V Function(T) _validate;
 
   /// An object that can validate a value of type [T]
